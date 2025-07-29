@@ -254,3 +254,4 @@ paket-files/
 src/MINDMATE.Web.Mvc/secrets.json
 src/MINDMATE.Web.Host/secrets.json
 src/MINDMATE.Migrator/secrets.json
+.env

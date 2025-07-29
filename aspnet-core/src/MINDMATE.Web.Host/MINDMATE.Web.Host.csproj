@@ -26,6 +26,14 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+  <None Update="appsettings*.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </None>
+</ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\MINDMATE.Web.Core\MINDMATE.Web.Core.csproj" />
     <ProjectReference Include="..\MINDMATE.EntityFrameworkCore\MINDMATE.EntityFrameworkCore.csproj" />
