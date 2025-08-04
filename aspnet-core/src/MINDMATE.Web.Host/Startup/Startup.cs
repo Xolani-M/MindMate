@@ -17,6 +17,7 @@ using MINDMATE.Configuration;
 using MINDMATE.Domain.Enums;
 using MINDMATE.Identity;
 using System;
+using MINDMATE.Application.EmailService;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -41,6 +42,8 @@ namespace MINDMATE.Web.Host.Startup
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // Register SendGrid EmailSender service
+            services.AddTransient<IEmailSender, EmailSender>();
             //MVC
 
             services.Configure<AbpAspNetCoreConfiguration>(options =>

@@ -22,13 +22,16 @@ public class SeekerAppService : AsyncCrudAppService<
     Abp.Dependency.ITransientDependency
     {
         private readonly SeekerManager _seekerManager;
+        private readonly EmailService.IEmailSender _emailSender;
 
         public SeekerAppService(
             IRepository<Seeker, Guid> repository,
-            SeekerManager seekerManager
+            SeekerManager seekerManager,
+            EmailService.IEmailSender emailSender
         ) : base(repository)
         {
             _seekerManager = seekerManager;
+            _emailSender = emailSender;
         }
 
         public override async Task<SeekerDto> CreateAsync(CreateSeekerDto input)
@@ -42,6 +45,13 @@ public class SeekerAppService : AsyncCrudAppService<
                 input.EmergencyContactName,
                 input.EmergencyContactPhone
             );
+
+            // Send welcome email
+            var subject = "🎉 Welcome to MindMate! 🎉";
+            var name = input.DisplayName ?? input.Name;
+            var plainTextContent = $"Hey {name}! We're absolutely thrilled you chose MindMate. Get ready for an awesome journey—your mental health matters and we're here to make it fun, supportive, and inspiring. Dive in, explore, and let MindMate be your companion for a happier, healthier you! 🚀";
+            var htmlContent = $"<div style='font-family:sans-serif;font-size:1.1em;'><h2>Hey {name}! 👋</h2><p>We're <strong>absolutely thrilled</strong> you chose <span style='color:#4F8A8B;'>MindMate</span>.<br><br>Get ready for an <span style='color:#F9A826;'>awesome journey</span>—your mental health matters and we're here to make it <strong>fun, supportive, and inspiring</strong>.<br><br>🚀 Dive in, explore, and let MindMate be your companion for a happier, healthier you!<br><br><em>Welcome to the MindMate family!</em></p></div>";
+            await _emailSender.SendEmailAsync(input.Email, subject, plainTextContent, htmlContent);
 
             return MapToEntityDto(seeker);
         }
