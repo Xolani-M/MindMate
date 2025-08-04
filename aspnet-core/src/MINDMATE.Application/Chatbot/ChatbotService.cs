@@ -16,18 +16,35 @@ public class ChatbotService : ITransientDependency
         private readonly HttpClient _httpClient;
         private readonly string _geminiEndpoint;
         private readonly string _geminiKey;
+        private readonly Seekers.SeekerAppService _seekerAppService;
 
-        public ChatbotService(IConfiguration configuration)
+        public ChatbotService(IConfiguration configuration, Seekers.SeekerAppService seekerAppService)
         {
             // Ensure the GEMINI_API_KEY environment variable is set before running the application
             _geminiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
             _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
             _httpClient = new HttpClient();
+            _seekerAppService = seekerAppService;
         }
 
-        public async Task<string> GetChatbotResponseAsync(string userMessage)
+        public async Task<string> GetChatbotResponseAsync(string userMessage, Guid seekerId)
         {
-            var instruction = "You are a friendly, intellectual, and empathetic mental health assistant. Focus your responses on depression (PHQ-9) and anxiety (GAD-7) assessments. Only give supportive, non-clinical advice. Respond with warmth and understanding, and always show you care.";
+            // Fetch personalized seeker info
+            var dashboard = await _seekerAppService.GetDashboardAsync(seekerId);
+
+            var seekerName = !string.IsNullOrWhiteSpace(dashboard.DisplayName) ? dashboard.DisplayName : dashboard.Name;
+            var instruction = $@"You are a friendly, intellectual, and empathetic mental health assistant. Address the seeker by their name in your responses. Focus your responses on depression (PHQ-9) and anxiety (GAD-7) assessments. Only give supportive, non-clinical advice. Respond with warmth and understanding, and always show you care.
+
+            Seeker info:
+            - Name: {seekerName}
+            - Latest mood: {dashboard.LatestMood}
+            - Average mood (last 7 days): {dashboard.AverageMoodLast7Days}
+            - Risk level: {dashboard.RiskLevel}
+            - Latest PHQ-9 score: {dashboard.LatestPhq9Score}
+            - Latest GAD-7 score: {dashboard.LatestGad7Score}
+            - Journal entries: {dashboard.TotalJournalEntries}
+            ";
+
             var payload = new {
                 contents = new[] {
                     new {
@@ -38,7 +55,7 @@ public class ChatbotService : ITransientDependency
                 }
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            
+
             var endpointWithKey = _geminiEndpoint.Contains("?")
                 ? _geminiEndpoint + "&key=" + _geminiKey
                 : _geminiEndpoint + "?key=" + _geminiKey;
