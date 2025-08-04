@@ -12,13 +12,14 @@ using System.Threading.Tasks;
 
 namespace MINDMATE.Application.Seekers
 {
-    public class SeekerAppService : AsyncCrudAppService<
-        Seeker,             
-        SeekerDto,              
-        Guid,                   
-        PagedAndSortedResultRequestDto,  
-        CreateSeekerDto,       
-        SeekerDto>         
+public class SeekerAppService : AsyncCrudAppService<
+    Seeker,
+    SeekerDto,
+    Guid,
+    PagedAndSortedResultRequestDto,
+    CreateSeekerDto,
+    SeekerDto>,
+    Abp.Dependency.ITransientDependency
     {
         private readonly SeekerManager _seekerManager;
 
@@ -71,28 +72,25 @@ namespace MINDMATE.Application.Seekers
             var dashboard = new SeekerDashboardDto
             {
                 TotalJournalEntries = seeker.JournalEntries?.Count ?? 0,
-
                 LatestMood = seeker.Moods?
                     .OrderByDescending(m => m.EntryDate)
                     .FirstOrDefault()?.Level.ToString(),
-
                 AverageMoodLast7Days = seeker.Moods?
                     .Where(m => m.EntryDate >= DateTime.Now.AddDays(-7))
                     .Select(m => (int)m.Level)
                     .DefaultIfEmpty()
                     .Average() ?? 0,
-
                 RiskLevel = seeker.CurrentRiskLevel.ToString(),
-
                 LatestPhq9Score = seeker.AssessmentResults?
                     .Where(a => a.Type == AssessmentType.PHQ9)
                     .OrderByDescending(a => a.CreationTime)
                     .FirstOrDefault()?.Score,
-
                 LatestGad7Score = seeker.AssessmentResults?
                     .Where(a => a.Type == AssessmentType.GAD7)
                     .OrderByDescending(a => a.CreationTime)
-                    .FirstOrDefault()?.Score
+                    .FirstOrDefault()?.Score,
+                Name = seeker.Name,
+                DisplayName = seeker.DisplayName
             };
 
             return dashboard;
