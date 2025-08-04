@@ -1,22 +1,26 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
+﻿using Abp.AspNetCore;
+using Abp.AspNetCore.Configuration;
+using Abp.AspNetCore.Mvc.Antiforgery;
+using Abp.AspNetCore.SignalR.Hubs;
+using Abp.Castle.Logging.Log4Net;
+using Abp.Extensions;
+using Castle.Facilities.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Castle.Facilities.Logging;
-using Abp.AspNetCore;
-using Abp.AspNetCore.Mvc.Antiforgery;
-using Abp.Castle.Logging.Log4Net;
-using Abp.Extensions;
-using MINDMATE.Configuration;
-using MINDMATE.Identity;
-using Abp.AspNetCore.SignalR.Hubs;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using MINDMATE.Configuration;
+using MINDMATE.Domain.Enums;
+using MINDMATE.Identity;
+using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+
 
 namespace MINDMATE.Web.Host.Startup
 {
@@ -38,10 +42,26 @@ namespace MINDMATE.Web.Host.Startup
         public void ConfigureServices(IServiceCollection services)
         {
             //MVC
+
+            services.Configure<AbpAspNetCoreConfiguration>(options =>
+            {
+                options.DefaultWrapResultAttribute.WrapOnError = true;
+            });
+
+
             services.AddControllersWithViews(options =>
             {
                 options.Filters.Add(new AbpAutoValidateAntiforgeryTokenAttribute());
+
             });
+
+            
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                });
+
 
             IdentityRegistrar.Register(services);
             AuthConfigurer.Configure(services, _appConfiguration);
@@ -83,6 +103,17 @@ namespace MINDMATE.Web.Host.Startup
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+
+
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage(); // shows exception page in browser
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error"); // optional: production fallback
+            }
+
             app.UseAbp(options => { options.UseAbpRequestLocalization = false; }); // Initializes ABP framework.
 
             app.UseCors(_defaultCorsPolicyName); // Enable CORS!
@@ -139,6 +170,22 @@ namespace MINDMATE.Web.Host.Startup
                         Url = new Uri("https://github.com/aspnetboilerplate/aspnetboilerplate/blob/dev/LICENSE"),
                     }
                 });
+
+                // ✅ Show enum values as strings
+                options.UseInlineDefinitionsForEnums(); // optional, improves Swagger readability
+
+                // ✅ Explicitly define RiskLevel enum in Swagger
+                options.MapType<RiskLevel>(() => new OpenApiSchema
+                {
+                    Type = "string",
+                    Description = "User's current risk level based on mental health assessments",
+                    Enum = Enum
+                        .GetNames(typeof(RiskLevel))
+                        .Select(name => (IOpenApiAny)new OpenApiString(name))
+                        .ToList()});
+
+
+
                 options.DocInclusionPredicate((docName, description) => true);
 
                 // Define the BearerAuth scheme that's in use

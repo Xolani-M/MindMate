@@ -3,13 +3,16 @@ using Abp.Dependency;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
+using DotNetEnv;
 
 namespace MINDMATE.Web.Host.Startup
 {
     public class Program
     {
+        
         public static void Main(string[] args)
         {
+            Env.Load();
             CreateHostBuilder(args).Build().Run();
         }
 

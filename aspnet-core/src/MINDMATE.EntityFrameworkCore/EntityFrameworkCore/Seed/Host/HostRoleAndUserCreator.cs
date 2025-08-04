@@ -37,6 +37,16 @@ namespace MINDMATE.EntityFrameworkCore.Seed.Host
                 _context.SaveChanges();
             }
 
+            
+            // Seeker role for host
+            var seekerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == null && r.Name == StaticRoleNames.Host.Seeker);
+            if (seekerRole == null)
+            {
+                seekerRole = _context.Roles.Add(new Role(null, StaticRoleNames.Host.Seeker, StaticRoleNames.Host.Seeker) { IsStatic = true }).Entity;
+                _context.SaveChanges();
+            }
+
+
             // Grant all permissions to admin role for host
 
             var grantedPermissions = _context.Permissions.IgnoreQueryFilters()

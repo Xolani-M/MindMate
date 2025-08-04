@@ -45,6 +45,8 @@ namespace MINDMATE
         public override void Initialize()
         {
             IocManager.RegisterAssemblyByConvention(typeof(MINDMATECoreModule).GetAssembly());
+
+
         }
 
         public override void PostInitialize()

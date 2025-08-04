@@ -84,6 +84,17 @@ namespace MINDMATE.EntityFrameworkCore.Seed.Tenants
                 _context.UserRoles.Add(new UserRole(_tenantId, adminUser.Id, adminRole.Id));
                 _context.SaveChanges();
             }
+
+             // Seeker role
+            var seekerRole = _context.Roles.IgnoreQueryFilters()
+                .FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Seeker);
+            if (seekerRole == null)
+            {
+                seekerRole = _context.Roles
+                    .Add(new Role(_tenantId, StaticRoleNames.Tenants.Seeker, StaticRoleNames.Tenants.Seeker) { IsStatic = true })
+                    .Entity;
+                _context.SaveChanges();
+            }
         }
     }
 }

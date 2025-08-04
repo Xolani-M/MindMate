@@ -13,6 +13,7 @@ namespace MINDMATE
         public override void PreInitialize()
         {
             Configuration.Authorization.Providers.Add<MINDMATEAuthorizationProvider>();
+
         }
 
         public override void Initialize()
@@ -20,6 +21,7 @@ namespace MINDMATE
             var thisAssembly = typeof(MINDMATEApplicationModule).GetAssembly();
 
             IocManager.RegisterAssemblyByConvention(thisAssembly);
+
 
             Configuration.Modules.AbpAutoMapper().Configurators.Add(
                 // Scan the assembly for classes which inherit from AutoMapper.Profile
