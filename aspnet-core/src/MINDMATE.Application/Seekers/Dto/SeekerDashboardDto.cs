@@ -14,5 +14,7 @@ namespace MINDMATE.Seekers.Dto
         public string RiskLevel { get; set; }
         public int? LatestPhq9Score { get; set; }
         public int? LatestGad7Score { get; set; }
+        public string Name { get; set; }
+        public string DisplayName { get; set; }
     }
 }
