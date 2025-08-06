@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: your-dockerhub-username/mindmate-backend
+  IMAGE_NAME: sagexv/mindmate-backend  # Replace with your actual Docker Hub repo
 
 jobs:
   build:
@@ -23,21 +23,21 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.x'  # or '7.0.x' if you're using .NET 7
+        dotnet-version: '6.0.x' # Match the version you use
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore MINDMATE.sln
 
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build MINDMATE.sln --no-restore --configuration Release
 
     - name: Run EF Core Migrations (optional)
       run: dotnet ef database update --project src/MINDMATE.EntityFrameworkCore --startup-project src/MINDMATE.Web.Host
       env:
         ConnectionStrings__Default: ${{ secrets.CONNECTION_STRING }}
 
-    - name: Publish
-      run: dotnet publish src/MINDMATE.Web.Host -c Release -o ./publish
+    - name: Publish Web.Host
+      run: dotnet publish src/MINDMATE.Web.Host/MINDMATE.Web.Host.csproj -c Release -o ./publish
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
