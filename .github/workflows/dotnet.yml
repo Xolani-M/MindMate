@@ -48,7 +48,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore aspnet-core/OnlineLearningPlatform.sln
+        run: dotnet restore aspnet-core/MINDMATE.sln
   
       - name: Run tests
         run: |
