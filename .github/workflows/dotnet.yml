@@ -26,18 +26,18 @@ jobs:
         dotnet-version: '6.0.x'  # or '7.0.x' if you're using .NET 7
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore aspnet-core/MINDMATE.sln
 
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build aspnet-core/MINDMATE.sln --no-restore
 
     - name: Run EF Core Migrations (optional)
-      run: dotnet ef database update --project src/MINDMATE.EntityFrameworkCore --startup-project src/MINDMATE.Web.Host
+      run: dotnet ef database update --project aspnet-core/src/MINDMATE.EntityFrameworkCore --startup-project aspnet-core/src/MINDMATE.Web.Host
       env:
         ConnectionStrings__Default: ${{ secrets.CONNECTION_STRING }}
 
     - name: Publish
-      run: dotnet publish src/MINDMATE.Web.Host -c Release -o ./publish
+      run: dotnet publish aspnet-core/src/MINDMATE.Web.Host/MINDMATE.Web.Host.csproj -c Release -o ./publish
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
