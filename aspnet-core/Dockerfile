@@ -3,8 +3,7 @@ WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
-
-#Build stage
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -20,7 +19,7 @@ COPY ["src/MINDMATE.EntityFrameworkCore/MINDMATE.EntityFrameworkCore.csproj", "s
 # Restore dependencies
 RUN dotnet restore "src/MINDMATE.Web.Host/MINDMATE.Web.Host.csproj"
 
-# Copy all project files
+# Copy everything else
 COPY . .
 
 # Set working directory to the Web.Host
@@ -29,24 +28,20 @@ WORKDIR "/src/src/MINDMATE.Web.Host"
 # Build project
 RUN dotnet build "MINDMATE.Web.Host.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-
 # Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "MINDMATE.Web.Host.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
+# Manually copy required config files to /app/publish
+COPY src/MINDMATE.Web.Host/log4net.config /app/publish/log4net.config
+COPY src/MINDMATE.Web.Host/log4net.Production.config /app/publish/log4net.Production.config
 
 # Final runtime image
 FROM base AS final
 WORKDIR /app
 
-# Copy published app files
+# Copy published output
 COPY --from=publish /app/publish .
 
-# Copy additional config files needed at runtime
-COPY --from=publish /app/publish/appsettings.json ./appsettings.json
-COPY --from=build /src/src/MINDMATE.Web.Host/log4net.config ./log4net.config
-COPY --from=build /src/src/MINDMATE.Web.Host/log4net.Production.config ./log4net.Production.config
-
-# Entry point
 ENTRYPOINT ["dotnet", "MINDMATE.Web.Host.dll"]
