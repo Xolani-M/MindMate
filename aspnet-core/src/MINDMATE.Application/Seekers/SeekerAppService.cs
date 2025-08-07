@@ -1,5 +1,6 @@
 ﻿using Abp.Application.Services;
 using Abp.Application.Services.Dto;
+using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
@@ -70,11 +71,15 @@ public class SeekerAppService : AsyncCrudAppService<
         }
 
 
-        public async Task<SeekerDashboardDto> GetDashboardAsync(Guid seekerId)
+        [AbpAuthorize]
+        public async Task<SeekerDashboardDto> GetMyDashboardAsync()
         {
+            if (!AbpSession.UserId.HasValue)
+                throw new UserFriendlyException("User is not logged in.");
+
             var seeker = await Repository
                 .GetAllIncluding(s => s.Moods, s => s.AssessmentResults, s => s.JournalEntries)
-                .FirstOrDefaultAsync(s => s.Id == seekerId);
+                .FirstOrDefaultAsync(s => s.UserId == AbpSession.UserId.Value);
 
             if (seeker == null)
                 throw new UserFriendlyException("Seeker not found.");
@@ -105,7 +110,6 @@ public class SeekerAppService : AsyncCrudAppService<
 
             return dashboard;
         }
-
 
     }
 }

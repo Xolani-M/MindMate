@@ -17,7 +17,7 @@ namespace MINDMATE.Application.Chatbot
 
         public async Task<ChatResponseDto> GetChatbotReplyAsync(ChatRequestDto input)
         {
-            var reply = await _chatbotService.GetChatbotResponseAsync(input.Message, input.SeekerId);
+            var reply = await _chatbotService.GetChatbotResponseAsync(input.Message);
             return new ChatResponseDto { Reply = reply };
         }
     }

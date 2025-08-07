@@ -27,10 +27,10 @@ public class ChatbotService : ITransientDependency
             _seekerAppService = seekerAppService;
         }
 
-        public async Task<string> GetChatbotResponseAsync(string userMessage, Guid seekerId)
+        public async Task<string> GetChatbotResponseAsync(string userMessage)
         {
-            // Fetch personalized seeker info
-            var dashboard = await _seekerAppService.GetDashboardAsync(seekerId);
+            // Fetch personalized seeker info for the current user
+            var dashboard = await _seekerAppService.GetMyDashboardAsync();
 
             var seekerName = !string.IsNullOrWhiteSpace(dashboard.DisplayName) ? dashboard.DisplayName : dashboard.Name;
             var instruction = $@"You are a friendly, intellectual, and empathetic mental health assistant. Address the seeker by their name in your responses. Focus your responses on depression (PHQ-9) and anxiety (GAD-7) assessments. Only give supportive, non-clinical advice. Respond with warmth and understanding, and always show you care.
