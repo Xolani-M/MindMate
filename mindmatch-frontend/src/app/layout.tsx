@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/providers/authProvider";
+import { SeekerProvider } from "@/providers/seeker";
+import { AssessmentProvider } from "@/providers/assessment";
+import { JournalProvider } from "@/providers/journal";
+import { MoodProvider } from "@/providers/mood";
+import { ChatProvider } from "@/providers/chat";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,10 +29,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
-      </body>
-    </html>
+    <AuthProvider>
+      <SeekerProvider>
+        <AssessmentProvider>
+          <JournalProvider>
+            <MoodProvider>
+              <ChatProvider>
+                <html lang="en">
+                  <body className={`${geistSans.variable} ${geistMono.variable}`}>
+                    {children}
+                  </body>
+                </html>
+              </ChatProvider>
+            </MoodProvider>
+          </JournalProvider>
+        </AssessmentProvider>
+      </SeekerProvider>
+    </AuthProvider>
   );
 }
