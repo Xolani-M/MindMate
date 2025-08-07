@@ -45,7 +45,6 @@ COPY --from=publish /app/publish .
 
 # Copy additional config files needed at runtime
 COPY --from=build /src/src/MINDMATE.Web.Host/appsettings.json ./appsettings.json
-COPY --from=build /src/src/MINDMATE.Web.Host/.env ./.env
 COPY --from=build /src/src/MINDMATE.Web.Host/log4net.config ./log4net.config
 COPY --from=build /src/src/MINDMATE.Web.Host/log4net.Production.config ./log4net.Production.config
 
