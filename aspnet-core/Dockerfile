@@ -29,23 +29,21 @@ WORKDIR "/src/src/MINDMATE.Web.Host"
 # Build project
 RUN dotnet build "MINDMATE.Web.Host.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# ----------------------
+
 # Publish stage
-# ----------------------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "MINDMATE.Web.Host.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# ----------------------
+
 # Final runtime image
-# ----------------------
 FROM base AS final
 WORKDIR /app
 
 # Copy published app files
 COPY --from=publish /app/publish .
 
-# ✅ Copy additional config files needed at runtime
+# Copy additional config files needed at runtime
 COPY --from=build /src/src/MINDMATE.Web.Host/appsettings.json ./appsettings.json
 COPY --from=build /src/src/MINDMATE.Web.Host/.env ./.env
 COPY --from=build /src/src/MINDMATE.Web.Host/log4net.config ./log4net.config
