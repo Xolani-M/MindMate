@@ -33,9 +33,6 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "MINDMATE.Web.Host.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Manually copy required config files to /app/publish
-COPY src/MINDMATE.Web.Host/log4net.config /app/publish/log4net.config
-COPY src/MINDMATE.Web.Host/log4net.Production.config /app/publish/log4net.Production.config
 
 # Final runtime image
 FROM base AS final
