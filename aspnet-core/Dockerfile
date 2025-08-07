@@ -4,7 +4,7 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
 
-# Build stage
+#Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
