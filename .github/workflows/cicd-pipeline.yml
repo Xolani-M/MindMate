@@ -1,0 +1,131 @@
+name: ci/cd
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build Stage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore aspnet-core/MINDMATE.sln
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release aspnet-core/MINDMATE.sln
+
+      - name: Publish
+        run: dotnet publish aspnet-core/MINDMATE.sln --no-build --configuration Release --output ./publish
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: ./publish
+
+  test:
+    name: Test Stage
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore aspnet-core/MINDMATE.sln
+
+      - name: Run tests
+        run: |
+          cd aspnet-core
+          dotnet test --verbosity normal
+
+  db_update:
+    name: Database Update
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main'
+
+    env:
+      PGHOST: ${{ secrets.DB_HOST }}
+      PGPORT: ${{ secrets.DB_PORT }}
+      PGNAME: ${{ secrets.DB_NAME }}
+      PGUSERNAME: ${{ secrets.DB_USERNAME }}
+      PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+      ASPNETCORE_ENVIRONMENT: Production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore aspnet-core/MINDMATE.sln
+
+      - name: Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Update Database
+        run: |
+          cd aspnet-core/src/MINDMATE.EntityFrameworkCore
+          dotnet ef database update
+
+  deploy:
+    name: Deploy Stage
+    runs-on: ubuntu-latest
+    needs: [build, test, db_update]
+    if: github.ref == 'refs/heads/main'
+
+    env:
+      REGISTRY: docker.io
+      IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/mindmate-backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./app
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and tag Docker image
+        run: |
+          cd aspnet-core
+          docker build -f Dockerfile -t $REGISTRY/$IMAGE_NAME:latest .
+
+      - name: Push Docker image
+        run: docker push $REGISTRY/$IMAGE_NAME:latest
+
+      - name: Trigger Render deployment
+        run: |
+          echo "Starting deployment..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
