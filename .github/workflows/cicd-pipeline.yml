@@ -67,7 +67,12 @@ jobs:
       PGNAME: ${{ secrets.DB_NAME }}
       PGUSERNAME: ${{ secrets.DB_USERNAME }}
       PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: ${{ secrets.ASPNETCORE_ENVIRONMENT }}
+      ConnectionStrings__Default: ${{ secrets.CONNECTIONSTRINGS_DEFAULT }}
+      Authentication__JwtBearer__SecurityKey: ${{ secrets.AUTHENTICATION_JWTBEARER_SECURITYKEY }}
+      App__ServerRootAddress: ${{ secrets.APP_SERVERROOTADDRESS }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      mindmate_api: ${{ secrets.MINDMATE_API }}
 
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +102,12 @@ jobs:
     env:
       REGISTRY: docker.io
       IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/mindmate-backend
+      ConnectionStrings__Default: ${{ secrets.CONNECTIONSTRINGS_DEFAULT }}
+      Authentication__JwtBearer__SecurityKey: ${{ secrets.AUTHENTICATION_JWTBEARER_SECURITYKEY }}
+      App__ServerRootAddress: ${{ secrets.APP_SERVERROOTADDRESS }}
+      ASPNETCORE_ENVIRONMENT: ${{ secrets.ASPNETCORE_ENVIRONMENT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      mindmate_api: ${{ secrets.MINDMATE_API }}
 
     steps:
       - name: Checkout code
