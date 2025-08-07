@@ -49,12 +49,12 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore aspnet-core/MINDMATE.sln
-  
+
       - name: Run tests
         run: |
           cd aspnet-core
           dotnet test --verbosity normal
-  
+
   db_update:
     name: Database Update
     runs-on: ubuntu-latest
@@ -94,6 +94,10 @@ jobs:
     needs: [build, test, db_update]
     if: github.ref == 'refs/heads/main'
 
+    env:
+      REGISTRY: docker.io
+      IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/mindmate-backend
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -107,15 +111,21 @@ jobs:
           name: app
           path: ./app
 
-      - name: Build Docker image
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and tag Docker image
         run: |
           cd aspnet-core
-          docker build -f Dockerfile -t mindmate:latest .
+          docker build -f Dockerfile -t $REGISTRY/$IMAGE_NAME:latest .
 
-      - name: Verify Docker image
-        run: docker images mindmate:latest
+      - name: Push Docker image
+        run: docker push $REGISTRY/$IMAGE_NAME:latest
 
-      - name: Deploy application to Render
+      - name: Trigger Render deployment
         run: |
           echo "Starting deployment..."
           curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
