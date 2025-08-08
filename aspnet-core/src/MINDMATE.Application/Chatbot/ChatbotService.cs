@@ -28,14 +28,37 @@ public class ChatbotService : ITransientDependency
 
         public ChatbotService(IConfiguration configuration, IRepository<Seeker, Guid> seekerRepository, IAbpSession abpSession)
         {
-            // Try environment variables first (Render uses Gemini__ApiKey), then configuration
-            _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
-                        Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? 
-                        configuration["Gemini:ApiKey"];
-            _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
-            _httpClient = new HttpClient();
-            _seekerRepository = seekerRepository;
-            _abpSession = abpSession;
+            try
+            {
+                _seekerRepository = seekerRepository ?? throw new ArgumentNullException(nameof(seekerRepository));
+                _abpSession = abpSession ?? throw new ArgumentNullException(nameof(abpSession));
+                
+                if (configuration == null)
+                    throw new ArgumentNullException(nameof(configuration));
+
+                // Try environment variables first (Render uses Gemini__ApiKey), then configuration
+                _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
+                            Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? 
+                            configuration["Gemini:ApiKey"];
+                _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
+
+                // Log configuration status (remove in production)
+                System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {_geminiEndpoint ?? "NULL"}");
+
+                if (string.IsNullOrWhiteSpace(_geminiKey))
+                    throw new InvalidOperationException("Gemini API key is not configured. Please set Gemini:ApiKey in configuration or GEMINI_API_KEY environment variable.");
+                
+                if (string.IsNullOrWhiteSpace(_geminiEndpoint))
+                    throw new InvalidOperationException("Gemini API endpoint is not configured. Please set Gemini:ApiEndpoint in configuration.");
+
+                _httpClient = new HttpClient();
+            }
+            catch (Exception ex)
+            {
+                // Log the full exception for debugging
+                System.Diagnostics.Debug.WriteLine($"ChatbotService Constructor Error: {ex}");
+                throw;
+            }
         }
 
 
@@ -43,6 +66,11 @@ public class ChatbotService : ITransientDependency
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(userMessage))
+                {
+                    return "Please provide a message to chat about.";
+                }
+
                 // Check if user is authenticated
                 if (!_abpSession.UserId.HasValue)
                 {
@@ -50,11 +78,12 @@ public class ChatbotService : ITransientDependency
                 }
 
                 // Fetch personalized seeker info for the current user with all related data
-                var seeker = await _seekerRepository
-                    .GetAll()
-                    .Include(s => s.Moods)
-                    .Include(s => s.AssessmentResults)
-                    .Include(s => s.JournalEntries)
+                var seekerQuery = await _seekerRepository.GetAllIncludingAsync(
+                    s => s.Moods,
+                    s => s.AssessmentResults,
+                    s => s.JournalEntries);
+                
+                var seeker = await seekerQuery
                     .FirstOrDefaultAsync(s => s.UserId == _abpSession.UserId.Value);
 
                 if (seeker == null)
@@ -95,6 +124,11 @@ public class ChatbotService : ITransientDependency
                 - Journal entries: {totalJournalEntries}
                 ";
 
+                if (_httpClient == null)
+                {
+                    throw new InvalidOperationException("HTTP client is not initialized.");
+                }
+
                 var payload = new {
                     contents = new[] {
                         new {
@@ -104,22 +138,45 @@ public class ChatbotService : ITransientDependency
                         }
                     }
                 };
+                
                 var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
                 var endpointWithKey = _geminiEndpoint.Contains("?")
                     ? _geminiEndpoint + "&key=" + _geminiKey
                     : _geminiEndpoint + "?key=" + _geminiKey;
+                    
                 var request = new HttpRequestMessage(HttpMethod.Post, endpointWithKey);
                 request.Content = content;
+                
                 var response = await _httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
+                
                 var responseString = await response.Content.ReadAsStringAsync();
+                
+                if (string.IsNullOrWhiteSpace(responseString))
+                {
+                    return "Sorry, I received an empty response from the AI service.";
+                }
+                
                 dynamic result = JsonConvert.DeserializeObject(responseString);
+                
                 try {
-                    return result.candidates[0].content.parts[0].text != null ? result.candidates[0].content.parts[0].text.ToString() : "Sorry, I couldn't generate a response.";
+                    return result?.candidates?[0]?.content?.parts?[0]?.text?.ToString() ?? "Sorry, I couldn't generate a response.";
                 } catch {
                     return "Sorry, I couldn't generate a response.";
                 }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                throw new UserFriendlyException($"Chatbot error: Failed to connect to AI service - {httpEx.Message}");
+            }
+            catch (ArgumentNullException argEx)
+            {
+                throw new UserFriendlyException($"Chatbot error: Missing required parameter - {argEx.Message}");
+            }
+            catch (InvalidOperationException ioEx)
+            {
+                throw new UserFriendlyException($"Chatbot error: Configuration issue - {ioEx.Message}");
             }
             catch (Exception ex)
             {
