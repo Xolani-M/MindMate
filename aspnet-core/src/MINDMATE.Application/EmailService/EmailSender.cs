@@ -11,8 +11,13 @@ public class EmailSender : IEmailSender
 
         public EmailSender()
         {
-            _apiKey = Environment.GetEnvironmentVariable("mindmate_api");
+            _apiKey = Environment.GetEnvironmentVariable("SendGrid__ApiKey");
+            if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                throw new Exception("SendGrid API key (SendGrid__ApiKey) is missing from environment variables.");
+            }
         }
+
 
         public async Task SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)
         {
