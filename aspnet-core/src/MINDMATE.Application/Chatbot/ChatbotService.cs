@@ -32,19 +32,28 @@ public class ChatbotService : ITransientDependency
             try
             {
                 // Fetch personalized seeker info for the current user
+
                 var dashboard = await _seekerAppService.GetMyDashboardAsync();
 
-                var seekerName = !string.IsNullOrWhiteSpace(dashboard.DisplayName) ? dashboard.DisplayName : dashboard.Name;
+                // Add null checks and safe defaults for all dashboard properties
+                var seekerName = !string.IsNullOrWhiteSpace(dashboard.DisplayName) ? dashboard.DisplayName : (dashboard.Name ?? "Seeker");
+                var latestMood = dashboard.LatestMood ?? "Unknown";
+                var averageMood = dashboard.AverageMoodLast7Days.ToString("0.##");
+                var riskLevel = dashboard.RiskLevel ?? "Unknown";
+                var latestPhq9 = dashboard.LatestPhq9Score?.ToString() ?? "N/A";
+                var latestGad7 = dashboard.LatestGad7Score?.ToString() ?? "N/A";
+                var totalJournalEntries = dashboard.TotalJournalEntries;
+
                 var instruction = $@"You are a friendly, intellectual, and empathetic mental health assistant. Address the seeker by their name in your responses. Focus your responses on depression (PHQ-9) and anxiety (GAD-7) assessments. Only give supportive, non-clinical advice. Respond with warmth and understanding, and always show you care.
 
                 Seeker info:
                 - Name: {seekerName}
-                - Latest mood: {dashboard.LatestMood}
-                - Average mood (last 7 days): {dashboard.AverageMoodLast7Days}
-                - Risk level: {dashboard.RiskLevel}
-                - Latest PHQ-9 score: {dashboard.LatestPhq9Score}
-                - Latest GAD-7 score: {dashboard.LatestGad7Score}
-                - Journal entries: {dashboard.TotalJournalEntries}
+                - Latest mood: {latestMood}
+                - Average mood (last 7 days): {averageMood}
+                - Risk level: {riskLevel}
+                - Latest PHQ-9 score: {latestPhq9}
+                - Latest GAD-7 score: {latestGad7}
+                - Journal entries: {totalJournalEntries}
                 ";
 
                 var payload = new {
