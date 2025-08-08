@@ -20,7 +20,8 @@ public class ChatbotService : ITransientDependency
 
         public ChatbotService(IConfiguration configuration, Seekers.SeekerAppService seekerAppService)
         {
-            _geminiKey = configuration["Gemini:ApiKey"];
+            // Try environment variable first, then configuration
+            _geminiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? configuration["Gemini:ApiKey"];
             _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
             _httpClient = new HttpClient();
             _seekerAppService = seekerAppService;
