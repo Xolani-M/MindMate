@@ -17,7 +17,7 @@ export interface ISeekerActionContext {
   updateProfile: (data: Partial<ISeeker>) => Promise<void>;
   setProfile: (profile: ISeeker | null) => void;
   resetProfile: () => void;
-  getDashboard: (seekerId: string) => Promise<void>;
+  getMyDashboard: () => Promise<void>;
 }
 
 export const SEEKER_INITIAL_STATE: ISeekerStateContext = {

@@ -8,10 +8,11 @@ import { ChatStateContext, ChatActionContext, initialChatState } from "./context
 import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
 import { chatReducer } from "./reducer";
 
+
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(chatReducer, initialChatState);
 
-  const sendUserMessage = async (text: string, seekerId: string) => {
+  const sendUserMessage = async (text: string) => {
     const userMsg: IChatMessage = {
       id: uuidv4(),
       sender: "user",
@@ -21,9 +22,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch(sendMessage(userMsg));
     dispatch(setLoading(true));
     try {
-      const res = await axiosInstance.get("/api/services/app/Chat/GetChatbotReply", {
-        params: { message: text, seekerId },
-      });
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+
+      const res = await axiosInstance.post(
+          "/api/services/app/Chat/GetChatbotReply",
+          { message: text },
+          token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+        );
+
       const botMsg: IChatMessage = {
         id: uuidv4(),
         sender: "bot",
@@ -41,7 +47,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Memoize actions to avoid unnecessary rerenders
   const actions = useMemo(() => ({ sendUserMessage }), []);
+
   return (
     <ChatStateContext.Provider value={state}>
       <ChatActionContext.Provider value={actions}>

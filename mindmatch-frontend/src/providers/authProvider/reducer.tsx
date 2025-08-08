@@ -3,28 +3,31 @@ import { INITIAL_STATE, IAuthStateContext } from "./context";
 import { AuthActionEnums } from "./actions";
 
 export const AuthReducer = handleActions<IAuthStateContext, IAuthStateContext>({
-    [AuthActionEnums.registerSeekerPending]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.registerSeekerPending]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
     }),
-    [AuthActionEnums.registerSeekerSuccess]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.registerSeekerSuccess]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
     }),
-    [AuthActionEnums.registerSeekerError]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.registerSeekerError]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
     }),
-    [AuthActionEnums.loginUserPending]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.loginUserPending]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
     }),
-    [AuthActionEnums.loginUserSuccess]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.loginUserSuccess]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
     }),
-    [AuthActionEnums.loginUserError]: (state: IAuthStateContext, action: Action<IAuthStateContext>) => ({
-        ...state,
-        ...action.payload,
+    [AuthActionEnums.loginUserError]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
+    }),
+    RESET_AUTH_STATE: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ...INITIAL_STATE
     })
 }, INITIAL_STATE);

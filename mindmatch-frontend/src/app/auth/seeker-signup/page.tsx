@@ -26,15 +26,16 @@ const SignupPage: React.FC = () => {
   const [form] = Form.useForm();
   const [password, setPassword] = useState('');
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const { registerSeeker } = useAuthActions();
+  const { registerSeeker, resetAuthState } = useAuthActions();
   const { isPending, isError, isSuccess } = useAuthState();
   const router = useRouter();
 
   React.useEffect(() => {
     if (isSuccess) {
+      resetAuthState();
       router.push('/auth/login');
     }
-  }, [isSuccess, router]);
+  }, [isSuccess, router, resetAuthState]);
   return (
     <div
       style={{

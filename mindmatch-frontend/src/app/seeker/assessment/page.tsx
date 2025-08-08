@@ -1,6 +1,6 @@
-
 "use client";
 import React, { useState } from "react";
+import SeekerNavBar from '@/components/SeekerNavBar';
 import { AssessmentProvider, useAssessmentActions, useAssessmentState } from "@/providers/assessment";
 import { useAuthState } from "@/providers/authProvider";
 import { getId } from "@/utils/jwt";
@@ -77,12 +77,14 @@ const AssessmentForm: React.FC = () => {
   const progress = Math.round(((currentQuestion + (showSummary ? 1 : 0)) / (totalQuestions + 1)) * 100);
 
   return (
-    <div
-      style={{
-        ...(assessmentStyles.container as React.CSSProperties),
-        background: 'linear-gradient(135deg, #fafbff, #f0f4ff)',
-      }}
-    >
+    <>
+      <SeekerNavBar />
+      <div
+        style={{
+          ...(assessmentStyles.container as React.CSSProperties),
+          background: 'linear-gradient(135deg, #fafbff, #f0f4ff)',
+        }}
+      >
       <div style={assessmentStyles.orbTop as React.CSSProperties} />
       <div style={assessmentStyles.orbBottom as React.CSSProperties} />
       <main className={styles.main} style={{ maxWidth: 600, width: "100%", zIndex: 2, position: "relative" }}>
@@ -223,7 +225,8 @@ const AssessmentForm: React.FC = () => {
           )}
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }
 

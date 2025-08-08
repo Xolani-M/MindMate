@@ -45,7 +45,8 @@ export const getRole = (loginObj: { accessToken: string } | string): string => {
 export const getId = (token: string): string => {
     if (token) {
         const decoded = decodeToken(token);
-        return `${decoded[AbpTokenProperies.nameidentifier] || ''}`.toLocaleLowerCase();
+        // Use seekerId if present, otherwise fallback to nameidentifier
+        return `${decoded['seekerId'] || decoded[AbpTokenProperies.nameidentifier] || ''}`;
     }
     return "1";
 };

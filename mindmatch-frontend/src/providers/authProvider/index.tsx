@@ -20,12 +20,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const instance = axiosInstance;
     const router = useRouter();
 
+    // Reset Auth State
+    const resetAuthState = useCallback(() => {
+        dispatch({ type: 'RESET_AUTH_STATE', payload: INITIAL_STATE });
+    }, [dispatch]);
+
     // Register Seeker
     const registerSeeker = useCallback(async (user: IUser) => {
         dispatch(registerSeekerPending());
         const endpoint = '/api/services/app/Seeker/Create';
         try {
             const response = await instance.post(endpoint, user);
+            // Get seekerId from response and store it
+            const seekerId = response.data.result?.id;
+            if (seekerId) {
+                sessionStorage.setItem('SeekerId', seekerId);
+            }
             dispatch(registerSeekerSuccess(response.data));
             router.push('/login');
         } catch (error) {
@@ -41,22 +51,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Login User
     const loginUser = useCallback(async (user: IUser) => {
         dispatch(loginUserPending());
-        const endpoint = '/TokenAuth/Authenticate';
+        const endpoint = '/api/TokenAuth/Authenticate';
         try {
-            const response = await instance.post(endpoint, user);
+            const payload = {
+                userNameOrEmailAddress: user.email,
+                password: user.password,
+                rememberClient: true
+            };
+            const response = await instance.post(endpoint, payload);
             const token = response.data.result.accessToken;
             const decoded = decodeToken(token);
+
             const userRole = decoded[AbpTokenProperies.role];
             const userId = decoded[AbpTokenProperies.nameidentifier];
+            const seekerId = decoded['seekerId'];
 
             sessionStorage.setItem('token', token);
             sessionStorage.setItem('role', userRole ?? '');
             sessionStorage.setItem('Id', userId ?? '');
 
-            // Pass user object with token to reducer
-            dispatch(loginUserSuccess({ ...user, token }));
-            router.push('/dashboard');
-        } catch (error) {
+            if (seekerId) {
+                sessionStorage.setItem('SeekerId', seekerId);
+            }
+
+            // Pass user object with token and seekerId to reducer
+            dispatch(loginUserSuccess({ ...user, token, seekerId }));
+            router.push('/seeker/dashboard');
+        } catch (error: unknown) {
+            if (typeof error === 'object' && error !== null && 'response' in error) {
+                // @ts-expect-error: error.response is expected from axios
+                console.error('Login error response:', error.response.data);
+            }
             if (error instanceof Error) {
                 console.error(error.message);
             } else {
@@ -66,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [dispatch, router, instance]);
 
-    const actions = useMemo(() => ({ registerSeeker, loginUser }), [registerSeeker, loginUser]);
+    const actions = useMemo(() => ({ registerSeeker, loginUser, resetAuthState }), [registerSeeker, loginUser, resetAuthState]);
     return (
         <AuthStateContext.Provider value={state}>
             <AuthActionContext.Provider value={actions}>

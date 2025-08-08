@@ -1,8 +1,8 @@
 export interface IJournalEntry {
-  id: number;
-  seekerId: number;
-  content: string;
+  id?: string;
+  seekerId: string;
+  entryText: string;
   moodScore: number;
   emotion: string;
-  createdAt: string;
+  createdAt?: string;
 }

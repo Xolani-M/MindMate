@@ -9,6 +9,7 @@ export interface IUser {
     emergencyContactName?: string;
     emergencyContactPhone?: string;
     token?: string; // JWT token for authenticated user
+    seekerId?: string; // Seeker GUID for authenticated user
 }
 
 export interface IAuthStateContext {
@@ -21,6 +22,7 @@ export interface IAuthStateContext {
 export interface IAuthActionContext {
     registerSeeker: (user: IUser) => Promise<void>;
     loginUser: (user: IUser) => Promise<void>;
+    resetAuthState: () => void;
 }
 
 export const INITIAL_STATE: IAuthStateContext = {

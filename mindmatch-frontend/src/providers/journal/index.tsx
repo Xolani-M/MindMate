@@ -26,7 +26,7 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const getEntries = async () => {
     dispatch(getEntriesPending());
     try {
-      const { data } = await axiosInstance.get("/services/app/Journal/GetEntries");
+      const { data } = await axiosInstance.get("/api/services/app/Journal/GetEntries");
       dispatch(getEntriesSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch journal entries";
@@ -40,7 +40,9 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const create = async (payload: Partial<IJournalEntry>) => {
     dispatch(createPending());
     try {
-      const { data } = await axiosInstance.post("/services/app/Journal/Create", payload);
+      // Only send the fields the backend expects
+      const { seekerId, entryText, moodScore, emotion } = payload;
+      const { data } = await axiosInstance.post("/api/services/app/Journal/Create", { seekerId, entryText, moodScore, emotion });
       dispatch(createSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to create journal entry";

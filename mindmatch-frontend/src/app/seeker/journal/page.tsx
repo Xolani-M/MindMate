@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import SeekerNavBar from '@/components/SeekerNavBar';
 import Image from "next/image";
 import { JournalProvider, useJournalState, useJournalActions } from "@/providers/journal";
 import { useAuthState } from "@/providers/authProvider";
@@ -7,13 +8,14 @@ import { getId } from "@/utils/jwt";
 import assessmentStyles from "../assessment/assessmentstyles";
 
 function JournalContent() {
-  const { entries, isPending, isError, error } = useJournalState();
-  const { getEntries, create } = useJournalActions();
+  const { entries, isPending, isError, error, isSuccess } = useJournalState();
+  const { getEntries, create, reset } = useJournalActions();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const { user } = useAuthState();
   const [text, setText] = useState("");
   const [moodScore, setMoodScore] = useState(5);
   const [emotion, setEmotion] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     getEntries();
@@ -21,24 +23,80 @@ function JournalContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    const seekerIdStr = user?.token ? getId(user.token) : "";
-    const seekerId = seekerIdStr ? Number(seekerIdStr) : undefined;
-    await create({ seekerId, content: text, moodScore, emotion });
+    setHasSubmitted(true);
+    const seekerId = user?.seekerId || (user?.token ? getId(user.token) : "");
+    const payload = { seekerId, entryText: text, moodScore, emotion };
+    await create(payload);
     setText("");
     setMoodScore(5);
     setEmotion("");
-    setSubmitting(false);
     getEntries();
+    setShowFeedback(true);
   };
 
+  // Auto-hide feedback on state change
+  useEffect(() => {
+    if (!hasSubmitted) return;
+    if (isSuccess || isError || isPending) {
+      setShowFeedback(true);
+      const timer = setTimeout(() => {
+        setShowFeedback(false);
+        reset();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, isError, isPending, reset, hasSubmitted]);
+
   return (
-    <div
-      style={{
-        ...(assessmentStyles.container as React.CSSProperties),
-        background: 'linear-gradient(135deg, #fafbff, #f0f4ff)',
-      }}
-    >
+    <>
+      <SeekerNavBar />
+      <div
+        style={{
+          ...(assessmentStyles.container as React.CSSProperties),
+          background: 'linear-gradient(135deg, #fafbff, #f0f4ff)',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+      {showFeedback && hasSubmitted && (
+        <div style={{
+          position: 'absolute',
+          top: 32,
+          left: 0,
+          right: 0,
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 10,
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            background: isError ? '#fee2e2' : isSuccess ? '#d1fae5' : '#e0e7ff',
+            color: isError ? '#991b1b' : isSuccess ? '#065f46' : '#3730a3',
+            padding: 16,
+            borderRadius: 12,
+            minWidth: 320,
+            maxWidth: 500,
+            textAlign: 'center',
+            fontWeight: 600,
+            fontSize: 17,
+            boxShadow: '0 4px 24px rgba(99,102,241,0.10)',
+            opacity: showFeedback ? 1 : 0,
+            transition: 'opacity 0.3s',
+          }}>
+            {isError
+              ? `Failed to add journal entry. ${error || 'Please try again.'}`
+              : isSuccess
+                ? 'Your journal entry was added successfully! Keep nurturing your mind.'
+                : isPending
+                  ? 'Adding your journal entry...'
+                  : ''}
+          </div>
+        </div>
+      )}
       <div style={assessmentStyles.orbTop as React.CSSProperties} />
       <div style={assessmentStyles.orbBottom as React.CSSProperties} />
       <main style={{ maxWidth: 600, width: "100%", zIndex: 2, position: "relative" }}>
@@ -64,7 +122,7 @@ function JournalContent() {
             <div style={{ marginBottom: 8 }}>
               <label htmlFor="moodScoreRange" style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>How was your mood today?</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f61e.svg" alt="Very Low" style={{ width: 22, height: 22 }} />
+                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f61e.svg" alt="Very Low" width={22} height={22} style={{ width: 22, height: 22 }} />
                 <input
                   id="moodScoreRange"
                   type="range"
@@ -74,7 +132,7 @@ function JournalContent() {
                   onChange={e => setMoodScore(Number(e.target.value))}
                   style={{ flex: 1 }}
                 />
-                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f604.svg" alt="Very High" style={{ width: 22, height: 22 }} />
+                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f604.svg" alt="Very High" width={22} height={22} style={{ width: 22, height: 22 }} />
                 <span style={{ minWidth: 24, fontWeight: 600, color: '#6366f1' }}>{moodScore}</span>
               </div>
               <div style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
@@ -90,13 +148,13 @@ function JournalContent() {
                 style={{ flex: 1, borderRadius: 8, border: "1px solid #ccc", padding: 6 }}
                 required
               />
-              <button
-                type="submit"
-                disabled={submitting || !text}
-                style={submitting || !text ? { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonPrimary}
-              >
-                {submitting ? "Saving..." : "Add Entry"}
-              </button>
+            <button
+              type="submit"
+              disabled={isPending || !text}
+              style={isPending || !text ? { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonPrimary}
+            >
+              {isPending ? "Saving..." : "Add Entry"}
+            </button>
             </div>
           </form>
           <h2 style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: 12 }}>Your Entries</h2>
@@ -106,7 +164,7 @@ function JournalContent() {
             {entries && entries.length > 0 ? (
               entries.map(entry => (
                 <div key={entry.id} style={{ background: "#f8fafc", borderRadius: 10, padding: 16, border: "1px solid #e5e7eb" }}>
-                  <div style={{ fontWeight: 500, marginBottom: 4 }}>{entry.content}</div>
+                  <div style={{ fontWeight: 500, marginBottom: 4 }}>{entry.entryText}</div>
                   <div style={{ fontSize: 14, color: "#6366f1" }}>Mood: {entry.moodScore ?? "-"} | Emotion: {entry.emotion ?? "-"}</div>
                   <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ""}</div>
                 </div>
@@ -117,7 +175,8 @@ function JournalContent() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }
 
