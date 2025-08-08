@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Always use the production backend API regardless of environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API || "https://mindmate-k682.onrender.com";
+const API_BASE_URL = "https://mindmate-k682.onrender.com";
 
 console.log("🔗 API Base URL:", API_BASE_URL);
 
