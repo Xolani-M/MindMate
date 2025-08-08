@@ -4,9 +4,9 @@ import React, { useReducer, useContext, useMemo } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
-import { ChatStateContext, ChatActionContext, initialChatState } from "./context";
+import { ChatStateContext, ChatActionContext } from "./context";
 import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
-import { chatReducer } from "./reducer";
+import { chatReducer, initialChatState } from "./reducer";
 
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
@@ -21,13 +21,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     };
     dispatch(sendMessage(userMsg));
     dispatch(setLoading(true));
+    dispatch(setError()); // Clear any previous errors
     try {
-      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
-
       const res = await axiosInstance.post(
           "/api/services/app/Chat/GetChatbotReply",
-          { message: text },
-          token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+          { message: text }
         );
 
       const botMsg: IChatMessage = {
@@ -37,6 +35,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         createdAt: new Date().toISOString(),
       };
       dispatch(receiveMessage(botMsg));
+      dispatch(setLoading(false));
     } catch (err: unknown) {
       console.error('Chat API Error:', err);
       
@@ -66,6 +65,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       dispatch(setError(errorMessage));
+      dispatch(setLoading(false));
     }
   };
 

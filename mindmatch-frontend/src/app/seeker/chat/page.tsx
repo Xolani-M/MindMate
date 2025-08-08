@@ -7,7 +7,7 @@ import { getId } from "@/utils/jwt";
 
 function ChatPage() {
   const { messages, loading, error } = useChatState();
-  const { sendUserMessage } = useChatActions() as { sendUserMessage: (text: string, seekerId: string) => Promise<void> };
+  const { sendUserMessage } = useChatActions();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const { user } = useAuthState();
@@ -18,7 +18,7 @@ function ChatPage() {
     e.preventDefault();
     if (!input.trim() || !seekerId) return;
     setSending(true);
-    await sendUserMessage(input, seekerId);
+    await sendUserMessage(input);
     setInput("");
     setSending(false);
   };
