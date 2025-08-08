@@ -70,6 +70,7 @@ jobs:
       ASPNETCORE_ENVIRONMENT: Production
       Gemini__ApiKey: ${{ secrets.Gemini__ApiKey }}
       SendGrid__ApiKey: ${{ secrets.SendGrid__ApiKey }}
+      ConnectionStrings__Default: ${{ secrets.CONNECTIONSTRINGS_DEFAULT }}
 
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +89,7 @@ jobs:
       - name: Update Database
         run: |
           cd aspnet-core/src/MINDMATE.EntityFrameworkCore
-          dotnet ef database update
+          dotnet ef database update --connection "$ConnectionStrings__Default"
 
   deploy:
     name: Deploy Stage
