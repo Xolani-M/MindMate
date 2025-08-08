@@ -10,9 +10,6 @@ namespace MINDMATE.Seekers.Journals.Dto
 {
     public class GetJournalEntriesInput : PagedAndSortedResultRequestDto
     {
-        [Required]
-        public Guid SeekerId { get; set; }
-
         public string SearchText { get; set; }
 
         public DateTime? FromDate { get; set; }
