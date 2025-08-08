@@ -9,7 +9,6 @@ namespace MINDMATE.Seekers.Moods.Dto
 {
     public class CreateMoodEntryDto
     {
-        public Guid SeekerId { get; set; }
         public MoodLevel Level { get; set; }
         public string Notes { get; set; }
     }
