@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { ChatProvider, useChatState, useChatActions } from "@/providers/chat";
 import { useAuthState } from "@/providers/authProvider";
-import { getId } from "@/utils/jwt";
 
 function ChatPage() {
   const { messages, loading, error } = useChatState();
@@ -11,12 +10,11 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const { user } = useAuthState();
-  const seekerId = user?.token ? getId(user.token) : null;
   const seekerName = user?.name || user?.displayName || null;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !seekerId) return;
+    if (!input.trim() || !user?.token) return; // Check for valid user token instead of seekerId
     setSending(true);
     await sendUserMessage(input);
     setInput("");
@@ -133,11 +131,11 @@ function ChatPage() {
                 minWidth: 0,
                 maxWidth: "100%",
               }}
-              disabled={sending || !seekerId}
+              disabled={sending || !user?.token}
             />
             <button
               type="submit"
-              disabled={sending || !input.trim() || !seekerId}
+              disabled={sending || !input.trim() || !user?.token}
               style={{ marginLeft: 10, background: "#6366f1", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}
             >
               Send
