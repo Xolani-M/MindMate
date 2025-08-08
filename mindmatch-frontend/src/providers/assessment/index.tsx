@@ -2,7 +2,7 @@
 import React, { useReducer, useContext, useMemo } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { AssessmentStateContext, AssessmentActionContext, ASSESSMENT_INITIAL_STATE } from "./context";
-import { IAssessment } from "./types";
+import { IAssessment, ICreateAssessmentRequest } from "./types";
 import { AssessmentReducer } from "./reducer";
 import {
   getAllPending,

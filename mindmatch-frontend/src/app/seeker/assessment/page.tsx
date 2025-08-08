@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { AssessmentProvider, useAssessmentActions, useAssessmentState } from "@/providers/assessment";
-import { useAuthState } from "@/providers/authProvider";
-import { getId } from "@/utils/jwt";
 import { PHQ9_QUESTIONS, GAD7_QUESTIONS, AssessmentType, AssessmentQuestion } from "./assessmentTemplates";
 import styles from "../../page.module.css";
 import assessmentStyles from "./assessmentstyles";
@@ -35,7 +33,6 @@ const AssessmentForm: React.FC = () => {
   const [showSummary, setShowSummary] = useState(false);
   const { isPending, isSuccess, isError, error, assessments } = useAssessmentState();
   const { create } = useAssessmentActions();
-  const { user } = useAuthState();
   const questions = getQuestions(assessmentType);
   const totalQuestions = questions.length;
 
@@ -56,10 +53,8 @@ const AssessmentForm: React.FC = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const seekerIdStr = user?.token ? getId(user.token) : "";
-    const seekerId = seekerIdStr ? Number(seekerIdStr) : undefined;
+    
     const payload = {
-      seekerId,
       type: assessmentType,
       answers: questions.map((q) => ({
         questionNumber: q.number,

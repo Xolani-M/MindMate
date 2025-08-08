@@ -10,9 +10,6 @@ namespace MINDMATE.Application.Seekers.Assessment.Dto
     public class CreateAssessmentDto
     {
         [Required]
-        public Guid SeekerId { get; set; }
-
-        [Required]
         public AssessmentType Type { get; set; }
 
         public List<AssessmentAnswerDto> Answers { get; set; }

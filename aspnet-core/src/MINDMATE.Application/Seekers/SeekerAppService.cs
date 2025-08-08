@@ -24,6 +24,7 @@ namespace MINDMATE.Application.Seekers
     {
         private readonly SeekerManager _seekerManager;
         private readonly EmailService.IEmailSender _emailSender;
+        private const string UserNotLoggedInMessage = "User is not logged in.";
 
         public SeekerAppService(
             IRepository<Seeker, Guid> repository,
@@ -88,8 +89,10 @@ namespace MINDMATE.Application.Seekers
         // Helper to retrieve Seeker entity by logged-in user's UserId
         private async Task<Seeker> GetSeekerByUserIdAsync(long userId)
         {
-            var seeker = await Repository
-                .GetAllIncluding(s => s.Moods, s => s.AssessmentResults, s => s.JournalEntries)
+            var seeker = await (await Repository.GetAllIncludingAsync(
+                s => s.Moods,
+                s => s.AssessmentResults,
+                s => s.JournalEntries))
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
             if (seeker == null)
@@ -104,7 +107,7 @@ namespace MINDMATE.Application.Seekers
         public async Task<SeekerDashboardDto> GetMyDashboardAsync()
         {
             if (!AbpSession.UserId.HasValue)
-                throw new UserFriendlyException("User is not logged in.");
+                throw new UserFriendlyException(UserNotLoggedInMessage);
 
             var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
 
@@ -137,7 +140,7 @@ namespace MINDMATE.Application.Seekers
         public async Task<SeekerDto> GetMyProfileAsync()
         {
             if (!AbpSession.UserId.HasValue)
-                throw new UserFriendlyException("User is not logged in.");
+                throw new UserFriendlyException(UserNotLoggedInMessage);
 
             var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
             return MapToEntityDto(seeker);
@@ -147,7 +150,7 @@ namespace MINDMATE.Application.Seekers
         public async Task<SeekerDto> UpdateMyProfileAsync(SeekerDto input)
         {
             if (!AbpSession.UserId.HasValue)
-                throw new UserFriendlyException("User is not logged in.");
+                throw new UserFriendlyException(UserNotLoggedInMessage);
 
             var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
             

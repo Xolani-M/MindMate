@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API,
+  baseURL: process.env.NEXT_PUBLIC_API || "https://mindmate-k682.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },
