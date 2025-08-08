@@ -27,7 +27,7 @@ export const AuthReducer = handleActions<IAuthStateContext, IAuthStateContext>({
         ..._state,
         ..._action.payload,
     }),
-    RESET_AUTH_STATE: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+    RESET_AUTH_STATE: () => ({
         ...INITIAL_STATE
     })
 }, INITIAL_STATE);

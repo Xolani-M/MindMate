@@ -42,16 +42,25 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       
       let errorMessage = "Failed to get chatbot reply.";
       
-      if (typeof err === 'object' && err !== null && 'response' in err) {
-        const axiosError = err as any;
-        if (axiosError.response?.status === 500) {
+      // Type guard for axios error
+      const isAxiosError = (error: unknown): error is { 
+        response: { 
+          status: number; 
+          data?: { error?: { message?: string } } 
+        } 
+      } => {
+        return typeof error === 'object' && error !== null && 'response' in error;
+      };
+      
+      if (isAxiosError(err)) {
+        if (err.response.status === 500) {
           errorMessage = "The chatbot service is temporarily unavailable. Please try again later.";
-        } else if (axiosError.response?.status === 401) {
+        } else if (err.response.status === 401) {
           errorMessage = "Please log in again to use the chatbot.";
-        } else if (axiosError.response?.data?.error?.message) {
-          errorMessage = axiosError.response.data.error.message;
+        } else if (err.response.data?.error?.message) {
+          errorMessage = err.response.data.error.message;
         }
-        console.error('Response data:', axiosError.response?.data);
+        console.error('Response data:', err.response.data);
       } else if (err instanceof Error) {
         errorMessage = `Network error: ${err.message}`;
       }

@@ -71,21 +71,33 @@ export default function ProfilePage() {
       setFeedbackType('success');
       setShowFeedback(true);
       setTimeout(() => setShowFeedback(false), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Profile update error:', error);
       
       let errorMessage = 'Failed to update profile. Please try again.';
       
-      if (error?.response?.status === 500) {
-        errorMessage = 'Server is temporarily unavailable. Please try again in a few minutes.';
-      } else if (error?.response?.status === 401) {
-        errorMessage = 'Your session has expired. Please log in again.';
-        setTimeout(() => router.push('/auth/login'), 2000);
-      } else if (error?.response?.status === 403) {
-        errorMessage = 'You do not have permission to update this profile.';
-      } else if (error?.response?.data?.error?.message) {
-        errorMessage = error.response.data.error.message;
-      } else if (error?.message) {
+      // Type guard to check if error has response property (axios error)
+      const isAxiosError = (err: unknown): err is { response: { status: number; data?: { error?: { message?: string } } } } => {
+        return typeof err === 'object' && err !== null && 'response' in err;
+      };
+      
+      // Type guard to check if error has message property
+      const isErrorWithMessage = (err: unknown): err is { message: string } => {
+        return typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string';
+      };
+      
+      if (isAxiosError(error)) {
+        if (error.response.status === 500) {
+          errorMessage = 'Server is temporarily unavailable. Please try again in a few minutes.';
+        } else if (error.response.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+          setTimeout(() => router.push('/auth/login'), 2000);
+        } else if (error.response.status === 403) {
+          errorMessage = 'You do not have permission to update this profile.';
+        } else if (error.response.data?.error?.message) {
+          errorMessage = error.response.data.error.message;
+        }
+      } else if (isErrorWithMessage(error)) {
         errorMessage = `Network error: ${error.message}`;
       }
       
@@ -119,8 +131,7 @@ export default function ProfilePage() {
       <>
         <SeekerNavBar />
         <div style={profileStyles.loading}>
-          <span style={{ marginRight: 12 }}>⏳</span>
-          {' '}Loading your profile...
+          Loading your profile...
         </div>
       </>
     );
@@ -131,8 +142,7 @@ export default function ProfilePage() {
       <>
         <SeekerNavBar />
         <div style={profileStyles.error}>
-          <span style={{ marginRight: 8 }}>❌</span>
-          {' '}{error || 'Failed to load profile'}
+          {error || 'Failed to load profile'}
         </div>
       </>
     );
@@ -143,8 +153,7 @@ export default function ProfilePage() {
       <>
         <SeekerNavBar />
         <div style={profileStyles.error}>
-          <span style={{ marginRight: 8 }}>⚠️</span>
-          {' '}Profile data not available
+          Profile data not available
         </div>
       </>
     );
@@ -199,8 +208,7 @@ export default function ProfilePage() {
                 fontWeight: 500,
                 marginBottom: 16,
               }}>
-                <span>{serverStatus === 'online' ? '🟢' : '🔴'}</span>
-                {' '}Server Status: {serverStatus === 'online' ? 'Online' : 'Offline - Some features may not work'}
+                Server Status: {serverStatus === 'online' ? 'Online' : 'Offline - Some features may not work'}
               </div>
             )}
 
@@ -218,8 +226,7 @@ export default function ProfilePage() {
             {/* Personal Information Section */}
             <div style={profileStyles.profileSection}>
               <div style={profileStyles.sectionTitle}>
-                <span>👤</span>
-                {' '}Personal Information
+                Personal Information
               </div>
               
               <div style={profileStyles.profileGrid}>
@@ -291,8 +298,7 @@ export default function ProfilePage() {
             {/* Emergency Contact Section */}
             <div style={profileStyles.emergencySection}>
               <div style={profileStyles.emergencyTitle}>
-                <span>🚨</span>
-                {' '}Emergency Contact
+                Emergency Contact
               </div>
               
               <div style={profileStyles.emergencyGrid}>
@@ -346,8 +352,7 @@ export default function ProfilePage() {
                     onFocus={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
                     onBlur={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                   >
-                    <span>💾</span>
-                    {' '}Save Changes
+                    Save Changes
                   </button>
                   <button
                     onClick={handleCancel}
@@ -357,8 +362,7 @@ export default function ProfilePage() {
                     onFocus={(e) => (e.currentTarget.style.background = '#f3f4f6')}
                     onBlur={(e) => (e.currentTarget.style.background = 'white')}
                   >
-                    <span>❌</span>
-                    {' '}Cancel
+                    Cancel
                   </button>
                 </>
               ) : (
@@ -370,8 +374,7 @@ export default function ProfilePage() {
                   onFocus={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
                   onBlur={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
-                  <span>✏️</span>
-                  {' '}Edit Profile
+                  Edit Profile
                 </button>
               )}
             </div>
