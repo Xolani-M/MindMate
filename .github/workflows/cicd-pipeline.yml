@@ -69,6 +69,7 @@ jobs:
       PGPASSWORD: ${{ secrets.DB_PASSWORD }}
       ASPNETCORE_ENVIRONMENT: Production
       Gemini__ApiKey: ${{ secrets.Gemini__ApiKey }}
+      SendGrid__ApiKey: ${{ secrets.SendGrid__ApiKey }}
 
     steps:
       - uses: actions/checkout@v4
@@ -99,6 +100,7 @@ jobs:
       REGISTRY: docker.io
       IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/mindmate-backend
       Gemini__ApiKey: ${{ secrets.Gemini__ApiKey }}
+      SendGrid__ApiKey: ${{ secrets.SendGrid__ApiKey }}
 
     steps:
       - name: Checkout code
