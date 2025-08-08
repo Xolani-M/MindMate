@@ -137,17 +137,6 @@ dotnet build         # Build solution
 dotnet test          # Run tests
 ```
 
-## 📱 Screenshots
-
-### Dashboard
-![Dashboard](_screenshots/ui-home.png)
-
-### User Authentication
-![Login](_screenshots/ui-login.png)
-
-### User Management
-![User Creation](_screenshots/ui-user-create-modal.png)
-
 ## 🤝 Contributing
 
 We welcome contributions! Please follow these steps:

@@ -16,13 +16,11 @@ interface ChatbotModalProps {
 
 function ChatbotModal({ onClose }: ChatbotModalProps) {
   const { messages, loading, error } = useChatState();
-  const { sendUserMessage } = useChatActions() as { sendUserMessage: (text: string, seekerId: string) => Promise<void> };
+  const { sendUserMessage } = useChatActions() as { sendUserMessage: (text: string) => Promise<void> };
   const [input, setInput] = useState<string>('');
-  const [sending, setSending] = useState<boolean>(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useAuthState();
-  const seekerId = user?.seekerId || null;
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -32,11 +30,10 @@ function ChatbotModal({ onClose }: ChatbotModalProps) {
 
   const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim() || !seekerId) return;
-    setSending(true);
-    await sendUserMessage(input, seekerId);
+    if (!input.trim() || !user?.token) return;
+    
+    await sendUserMessage(input);
     setInput('');
-    setSending(false);
   };
 
   // Render modal in a portal, fixed at bottom right of viewport
@@ -192,13 +189,13 @@ function ChatbotModal({ onClose }: ChatbotModalProps) {
             background: '#f8fafc',
             color: '#222',
           }}
-          disabled={sending || !seekerId}
+          disabled={loading || !user?.token}
           aria-label="Chat input"
           inputMode="text"
         />
         <button
           type="submit"
-          disabled={sending || !input.trim() || !seekerId}
+          disabled={loading || !input.trim() || !user?.token}
           style={{
             background: '#6366f1',
             color: 'white',
@@ -207,7 +204,7 @@ function ChatbotModal({ onClose }: ChatbotModalProps) {
             padding: '12px 22px',
             fontWeight: 700,
             fontSize: 15.5,
-            cursor: sending || !input.trim() || !seekerId ? 'not-allowed' : 'pointer',
+            cursor: loading || !input.trim() || !user?.token ? 'not-allowed' : 'pointer',
             boxShadow: '0 2px 8px rgba(99,102,241,0.10)',
             transition: 'background 0.2s',
             minWidth: 70,

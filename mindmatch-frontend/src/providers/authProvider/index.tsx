@@ -1,6 +1,6 @@
 
 "use client";
-import { useContext, useReducer, useMemo, useCallback } from "react";
+import { useContext, useReducer, useMemo, useCallback, useEffect } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { INITIAL_STATE, IUser, AuthStateContext, AuthActionContext } from "./context";
 import { AuthReducer } from "./reducer";
@@ -19,6 +19,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(AuthReducer, INITIAL_STATE);
     const instance = axiosInstance;
     const router = useRouter();
+
+    // Initialize user state from sessionStorage on app start
+    useEffect(() => {
+        const token = sessionStorage.getItem('token');
+        const seekerId = sessionStorage.getItem('SeekerId');
+        
+        if (token) {
+            try {
+                const decoded = decodeToken(token);
+                const decodedSeekerId = decoded['seekerId'] || seekerId;
+                
+                // Initialize user state with existing session data
+                const user: IUser = {
+                    token,
+                    seekerId: decodedSeekerId || undefined,
+                };
+                
+                dispatch(loginUserSuccess(user));
+            } catch (error) {
+                console.error('Failed to restore user session:', error);
+                // Clear invalid token
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('SeekerId');
+                sessionStorage.removeItem('role');
+                sessionStorage.removeItem('Id');
+            }
+        }
+    }, []);
 
     // Reset Auth State
     const resetAuthState = useCallback(() => {
