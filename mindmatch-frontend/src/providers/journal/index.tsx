@@ -26,11 +26,13 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const getEntries = async () => {
     dispatch(getEntriesPending());
     try {
-      // Send pagination parameters that the backend expects
-      const { data } = await axiosInstance.post("/api/services/app/Journal/GetEntries", {
-        skipCount: 0,
-        maxResultCount: 100,
-        sorting: ""
+      // Use GET with query parameters for GetEntries
+      const { data } = await axiosInstance.get("/api/services/app/Journal/GetEntries", {
+        params: {
+          skipCount: 0,
+          maxResultCount: 100,
+          sorting: ""
+        }
       });
       dispatch(getEntriesSuccess(data.result.items || data.result));
     } catch (err) {
@@ -45,12 +47,12 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const create = async (payload: Partial<IJournalEntry>) => {
     dispatch(createPending());
     try {
-      // Backend expects: EntryText, MoodScore, Emotion (no seekerId as it gets it from session)
+      // Backend expects: EntryText, MoodScore, Emotion (PascalCase)
       const { entryText, moodScore, emotion } = payload;
       const { data } = await axiosInstance.post("/api/services/app/Journal/Create", { 
-        entryText, 
-        moodScore, 
-        emotion 
+        EntryText: entryText, 
+        MoodScore: moodScore, 
+        Emotion: emotion 
       });
       dispatch(createSuccess(data.result));
     } catch (err) {
