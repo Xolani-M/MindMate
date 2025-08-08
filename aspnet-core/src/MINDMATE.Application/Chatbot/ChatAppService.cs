@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
 using Abp.Application.Services;
+using Microsoft.AspNetCore.Mvc;
 using MINDMATE.Application.Chatbot;
-
 using MINDMATE.Application.Chatbot.Dto;
+using System.Threading.Tasks;
 
 namespace MINDMATE.Application.Chatbot
 {
@@ -15,6 +15,7 @@ namespace MINDMATE.Application.Chatbot
             _chatbotService = chatbotService;
         }
 
+        [HttpPost]
         public async Task<ChatResponseDto> GetChatbotReplyAsync(ChatRequestDto input)
         {
             var reply = await _chatbotService.GetChatbotResponseAsync(input.Message);
