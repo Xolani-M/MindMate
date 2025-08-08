@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
 import Image from "next/image";
 import { JournalProvider, useJournalState, useJournalActions } from "@/providers/journal";
-import { useAuthState } from "@/providers/authProvider";
-import { getId } from "@/utils/jwt";
 import assessmentStyles from "../assessment/assessmentstyles";
 
 function JournalContent() {
@@ -12,7 +10,6 @@ function JournalContent() {
   const { getEntries, create, reset } = useJournalActions();
   const [showFeedback, setShowFeedback] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const { user } = useAuthState();
   const [text, setText] = useState("");
   const [moodScore, setMoodScore] = useState(5);
   const [emotion, setEmotion] = useState("");
@@ -24,8 +21,7 @@ function JournalContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasSubmitted(true);
-    const seekerId = user?.seekerId || (user?.token ? getId(user.token) : "");
-    const payload = { seekerId, entryText: text, moodScore, emotion };
+    const payload = { entryText: text, moodScore, emotion };
     await create(payload);
     setText("");
     setMoodScore(5);
@@ -46,6 +42,26 @@ function JournalContent() {
       return () => clearTimeout(timer);
     }
   }, [isSuccess, isError, isPending, reset, hasSubmitted]);
+
+  // Helper functions for styling
+  const getFeedbackBackground = () => {
+    if (isError) return '#fee2e2';
+    if (isSuccess) return '#d1fae5';
+    return '#e0e7ff';
+  };
+
+  const getFeedbackColor = () => {
+    if (isError) return '#991b1b';
+    if (isSuccess) return '#065f46';
+    return '#3730a3';
+  };
+
+  const getFeedbackMessage = () => {
+    if (isError) return `Failed to add journal entry. ${error || 'Please try again.'}`;
+    if (isSuccess) return 'Your journal entry was added successfully! Keep nurturing your mind.';
+    if (isPending) return 'Adding your journal entry...';
+    return '';
+  };
 
   return (
     <>
@@ -74,8 +90,8 @@ function JournalContent() {
           pointerEvents: 'none',
         }}>
           <div style={{
-            background: isError ? '#fee2e2' : isSuccess ? '#d1fae5' : '#e0e7ff',
-            color: isError ? '#991b1b' : isSuccess ? '#065f46' : '#3730a3',
+            background: getFeedbackBackground(),
+            color: getFeedbackColor(),
             padding: 16,
             borderRadius: 12,
             minWidth: 320,
@@ -87,13 +103,7 @@ function JournalContent() {
             opacity: showFeedback ? 1 : 0,
             transition: 'opacity 0.3s',
           }}>
-            {isError
-              ? `Failed to add journal entry. ${error || 'Please try again.'}`
-              : isSuccess
-                ? 'Your journal entry was added successfully! Keep nurturing your mind.'
-                : isPending
-                  ? 'Adding your journal entry...'
-                  : ''}
+            {getFeedbackMessage()}
           </div>
         </div>
       )}

@@ -26,8 +26,13 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const getEntries = async () => {
     dispatch(getEntriesPending());
     try {
-      const { data } = await axiosInstance.get("/api/services/app/Journal/GetEntries");
-      dispatch(getEntriesSuccess(data.result));
+      // Send pagination parameters that the backend expects
+      const { data } = await axiosInstance.post("/api/services/app/Journal/GetEntries", {
+        skipCount: 0,
+        maxResultCount: 100,
+        sorting: ""
+      });
+      dispatch(getEntriesSuccess(data.result.items || data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch journal entries";
       if (typeof err === "object" && err !== null) {
@@ -40,9 +45,13 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const create = async (payload: Partial<IJournalEntry>) => {
     dispatch(createPending());
     try {
-      // Only send the fields the backend expects
-      const { seekerId, entryText, moodScore, emotion } = payload;
-      const { data } = await axiosInstance.post("/api/services/app/Journal/Create", { seekerId, entryText, moodScore, emotion });
+      // Backend expects: EntryText, MoodScore, Emotion (no seekerId as it gets it from session)
+      const { entryText, moodScore, emotion } = payload;
+      const { data } = await axiosInstance.post("/api/services/app/Journal/Create", { 
+        entryText, 
+        moodScore, 
+        emotion 
+      });
       dispatch(createSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to create journal entry";
