@@ -6,6 +6,13 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Abp.Dependency;
 using System;
+using Abp.Domain.Repositories;
+using MINDMATE.Domain.Seekers;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using MINDMATE.Domain.Enums;
+using Abp.Runtime.Session;
+using Abp.UI;
 
 namespace MINDMATE.Application.Chatbot
 {
@@ -16,9 +23,10 @@ public class ChatbotService : ITransientDependency
         private readonly HttpClient _httpClient;
         private readonly string _geminiEndpoint;
         private readonly string _geminiKey;
-        private readonly Seekers.SeekerAppService _seekerAppService;
+        private readonly IRepository<Seeker, Guid> _seekerRepository;
+        private readonly IAbpSession _abpSession;
 
-        public ChatbotService(IConfiguration configuration, Seekers.SeekerAppService seekerAppService)
+        public ChatbotService(IConfiguration configuration, IRepository<Seeker, Guid> seekerRepository, IAbpSession abpSession)
         {
             // Try environment variables first (Render uses Gemini__ApiKey), then configuration
             _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
@@ -26,7 +34,8 @@ public class ChatbotService : ITransientDependency
                         configuration["Gemini:ApiKey"];
             _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
             _httpClient = new HttpClient();
-            _seekerAppService = seekerAppService;
+            _seekerRepository = seekerRepository;
+            _abpSession = abpSession;
         }
 
 
@@ -34,18 +43,49 @@ public class ChatbotService : ITransientDependency
         {
             try
             {
+                // Check if user is authenticated
+                if (!_abpSession.UserId.HasValue)
+                {
+                    return "Please log in to use the chatbot.";
+                }
+
                 // Fetch personalized seeker info for the current user
+                var seekers = await _seekerRepository.GetAllListAsync(s => s.UserId == _abpSession.UserId.Value);
+                var seeker = seekers.FirstOrDefault();
+                
+                if (seeker != null)
+                {
+                    // Load related data manually
+                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.Moods);
+                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.AssessmentResults);
+                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.JournalEntries);
+                }
 
-                var dashboard = await _seekerAppService.GetMyDashboardAsync();
+                if (seeker == null)
+                {
+                    return "Profile not found. Please ensure your account is properly set up.";
+                }
 
-                // Add null checks and safe defaults for all dashboard properties
-                var seekerName = !string.IsNullOrWhiteSpace(dashboard.DisplayName) ? dashboard.DisplayName : (dashboard.Name ?? "Seeker");
-                var latestMood = dashboard.LatestMood ?? "Unknown";
-                var averageMood = dashboard.AverageMoodLast7Days.ToString("0.##");
-                var riskLevel = dashboard.RiskLevel ?? "Unknown";
-                var latestPhq9 = dashboard.LatestPhq9Score?.ToString() ?? "N/A";
-                var latestGad7 = dashboard.LatestGad7Score?.ToString() ?? "N/A";
-                var totalJournalEntries = dashboard.TotalJournalEntries;
+                // Build dashboard data safely
+                var seekerName = !string.IsNullOrWhiteSpace(seeker.DisplayName) ? seeker.DisplayName : (seeker.Name ?? "Seeker");
+                var latestMood = seeker.Moods?
+                    .OrderByDescending(m => m.EntryDate)
+                    .FirstOrDefault()?.Level.ToString() ?? "Unknown";
+                var averageMood = seeker.Moods?
+                    .Where(m => m.EntryDate >= DateTime.Now.AddDays(-7))
+                    .Select(m => (int)m.Level)
+                    .DefaultIfEmpty()
+                    .Average().ToString("0.##") ?? "0";
+                var riskLevel = seeker.CurrentRiskLevel.ToString();
+                var latestPhq9 = seeker.AssessmentResults?
+                    .Where(a => a.Type == AssessmentType.PHQ9)
+                    .OrderByDescending(a => a.CreationTime)
+                    .FirstOrDefault()?.Score.ToString() ?? "N/A";
+                var latestGad7 = seeker.AssessmentResults?
+                    .Where(a => a.Type == AssessmentType.GAD7)
+                    .OrderByDescending(a => a.CreationTime)
+                    .FirstOrDefault()?.Score.ToString() ?? "N/A";
+                var totalJournalEntries = seeker.JournalEntries?.Count ?? 0;
 
                 var instruction = $@"You are a friendly, intellectual, and empathetic mental health assistant. Address the seeker by their name in your responses. Focus your responses on depression (PHQ-9) and anxiety (GAD-7) assessments. Only give supportive, non-clinical advice. Respond with warmth and understanding, and always show you care.
 
@@ -87,7 +127,7 @@ public class ChatbotService : ITransientDependency
             }
             catch (Exception ex)
             {
-                throw new Abp.UI.UserFriendlyException($"Chatbot error: {ex.Message}\n{ex.StackTrace}");
+                throw new UserFriendlyException($"Chatbot error: {ex.Message}");
             }
         }
     }

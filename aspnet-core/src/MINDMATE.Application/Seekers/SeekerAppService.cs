@@ -132,5 +132,35 @@ namespace MINDMATE.Application.Seekers
                 DisplayName = seeker.DisplayName
             };
         }
+
+        [AbpAuthorize]
+        public async Task<SeekerDto> GetMyProfileAsync()
+        {
+            if (!AbpSession.UserId.HasValue)
+                throw new UserFriendlyException("User is not logged in.");
+
+            var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
+            return MapToEntityDto(seeker);
+        }
+
+        [AbpAuthorize]
+        public async Task<SeekerDto> UpdateMyProfileAsync(SeekerDto input)
+        {
+            if (!AbpSession.UserId.HasValue)
+                throw new UserFriendlyException("User is not logged in.");
+
+            var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
+            
+            // Update the seeker properties
+            seeker.Name = input.Name;
+            seeker.Surname = input.Surname;
+            seeker.Email = input.Email;
+            seeker.DisplayName = input.DisplayName;
+            seeker.EmergencyContactName = input.EmergencyContactName;
+            seeker.EmergencyContactPhone = input.EmergencyContactPhone;
+
+            await Repository.UpdateAsync(seeker);
+            return MapToEntityDto(seeker);
+        }
     }
 }
