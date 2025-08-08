@@ -37,13 +37,26 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         createdAt: new Date().toISOString(),
       };
       dispatch(receiveMessage(botMsg));
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error(err.message);
-      } else {
-        console.error(err);
+    } catch (err: unknown) {
+      console.error('Chat API Error:', err);
+      
+      let errorMessage = "Failed to get chatbot reply.";
+      
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const axiosError = err as any;
+        if (axiosError.response?.status === 500) {
+          errorMessage = "The chatbot service is temporarily unavailable. Please try again later.";
+        } else if (axiosError.response?.status === 401) {
+          errorMessage = "Please log in again to use the chatbot.";
+        } else if (axiosError.response?.data?.error?.message) {
+          errorMessage = axiosError.response.data.error.message;
+        }
+        console.error('Response data:', axiosError.response?.data);
+      } else if (err instanceof Error) {
+        errorMessage = `Network error: ${err.message}`;
       }
-      dispatch(setError("Failed to get reply."));
+      
+      dispatch(setError(errorMessage));
     }
   };
 

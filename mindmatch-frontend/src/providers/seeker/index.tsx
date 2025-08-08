@@ -23,7 +23,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getProfile = async () => {
     dispatch(getProfilePending());
-    const endpoint = "/api/services/app/Seeker/Get";
+    const endpoint = "/api/services/app/Seeker/GetMyProfile";
     await axiosInstance.get(endpoint)
       .then((response: { data: { result: ISeeker } }) => {
         dispatch(getProfileSuccess(response.data.result));
@@ -39,7 +39,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateProfile = async (updatedData: Partial<ISeeker>) => {
     dispatch(updateProfilePending());
-    const endpoint = "/api/services/app/Seeker/Update";
+    const endpoint = "/api/services/app/Seeker/UpdateMyProfile";
     await axiosInstance.put(endpoint, updatedData)
       .then((response: { data: { result: ISeeker } }) => {
         dispatch(updateProfileSuccess(response.data.result));

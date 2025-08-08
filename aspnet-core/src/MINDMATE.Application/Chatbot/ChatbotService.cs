@@ -49,17 +49,13 @@ public class ChatbotService : ITransientDependency
                     return "Please log in to use the chatbot.";
                 }
 
-                // Fetch personalized seeker info for the current user
-                var seekers = await _seekerRepository.GetAllListAsync(s => s.UserId == _abpSession.UserId.Value);
-                var seeker = seekers.FirstOrDefault();
-                
-                if (seeker != null)
-                {
-                    // Load related data manually
-                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.Moods);
-                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.AssessmentResults);
-                    await _seekerRepository.EnsureCollectionLoadedAsync(seeker, s => s.JournalEntries);
-                }
+                // Fetch personalized seeker info for the current user with all related data
+                var seeker = await _seekerRepository
+                    .GetAll()
+                    .Include(s => s.Moods)
+                    .Include(s => s.AssessmentResults)
+                    .Include(s => s.JournalEntries)
+                    .FirstOrDefaultAsync(s => s.UserId == _abpSession.UserId.Value);
 
                 if (seeker == null)
                 {
