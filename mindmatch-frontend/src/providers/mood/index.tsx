@@ -22,7 +22,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
   const getRecent = async () => {
     dispatch(getRecentPending());
     try {
-      const { data } = await axiosInstance.get("/services/app/Mood/GetRecent");
+      const { data } = await axiosInstance.get("/api/services/app/Mood/GetRecent");
       dispatch(getRecentSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch recent moods";
@@ -41,7 +41,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
   const getTrend = async () => {
     dispatch(getTrendPending());
     try {
-      const { data } = await axiosInstance.get("/services/app/Mood/GetMoodTrend");
+      const { data } = await axiosInstance.get("/api/services/app/Mood/GetMoodTrend");
       dispatch(getTrendSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch mood trend";
@@ -60,7 +60,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
   const create = async (payload: Partial<IMood>) => {
     dispatch(createPending());
     try {
-      const { data } = await axiosInstance.post("/services/app/Mood/Create", payload);
+      const { data } = await axiosInstance.post("/api/services/app/Mood/Create", payload);
       dispatch(createSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to create mood entry";

@@ -57,6 +57,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const registerSeeker = useCallback(async (user: IUser) => {
         dispatch(registerSeekerPending());
         const endpoint = '/api/services/app/Seeker/Create';
+        console.log("🚀 Registering seeker with endpoint:", endpoint);
+        console.log("🔗 Axios base URL:", instance.defaults.baseURL);
+        console.log("📝 Payload:", user);
         try {
             const response = await instance.post(endpoint, user);
             // Get seekerId from response and store it
@@ -67,6 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             dispatch(registerSeekerSuccess(response.data));
             router.push('/login');
         } catch (error) {
+            console.error("❌ Registration error:", error);
             dispatch(registerSeekerError());
             if (error instanceof Error) {
                 console.error(error.message);

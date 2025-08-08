@@ -25,7 +25,7 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
   const getAll = async () => {
     dispatch(getAllPending());
     try {
-      const { data } = await axiosInstance.get("/services/app/Assessment/GetAll");
+      const { data } = await axiosInstance.get("/api/services/app/Assessment/GetAll");
       dispatch(getAllSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch assessments";
@@ -39,7 +39,7 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
   const get = async (id: number) => {
     dispatch(getPending());
     try {
-      const { data } = await axiosInstance.get(`/services/app/Assessment/Get?id=${id}`);
+      const { data } = await axiosInstance.get(`/api/services/app/Assessment/Get?id=${id}`);
       dispatch(getSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to fetch assessment";
@@ -53,7 +53,7 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
   const create = async (payload: Partial<IAssessment>) => {
     dispatch(createPending());
     try {
-      const { data } = await axiosInstance.post("/services/app/Assessment/Create", payload);
+      const { data } = await axiosInstance.post("/api/services/app/Assessment/Create", payload);
       dispatch(createSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to create assessment";
@@ -67,7 +67,7 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
   const update = async (payload: Partial<IAssessment>) => {
     dispatch(updatePending());
     try {
-      const { data } = await axiosInstance.put("/services/app/Assessment/Update", payload);
+      const { data } = await axiosInstance.put("/api/services/app/Assessment/Update", payload);
       dispatch(updateSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to update assessment";

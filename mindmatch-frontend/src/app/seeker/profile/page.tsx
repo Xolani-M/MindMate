@@ -29,7 +29,7 @@ export default function ProfilePage() {
     // Check server status
     const checkServerStatus = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/services/app/Session/GetCurrentLoginInformations`);
+        const response = await fetch(`https://mindmate-k682.onrender.com/api/services/app/Session/GetCurrentLoginInformations`);
         if (response.ok) {
           setServerStatus('online');
         } else {

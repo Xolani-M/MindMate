@@ -67,7 +67,7 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const update = async (payload: Partial<IJournalEntry>) => {
     dispatch(updatePending());
     try {
-      const { data } = await axiosInstance.put("/services/app/Journal/Update", payload);
+      const { data } = await axiosInstance.put("/api/services/app/Journal/Update", payload);
       dispatch(updateSuccess(data.result));
     } catch (err) {
       let errorMsg = "Failed to update journal entry";
@@ -81,7 +81,7 @@ export const JournalProvider = ({ children }: { children: React.ReactNode }) => 
   const deleteJournalEntry = async (id: number) => {
     dispatch(deletePending());
     try {
-      await axiosInstance.delete(`/services/app/Journal/Delete?id=${id}`);
+      await axiosInstance.delete(`/api/services/app/Journal/Delete?id=${id}`);
       dispatch(deleteSuccess());
     } catch (err) {
       let errorMsg = "Failed to delete journal entry";
