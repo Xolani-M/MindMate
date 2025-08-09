@@ -2,33 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { useMoodState, useMoodActions } from '@/providers/mood';
-import { useAuthState } from '@/providers/authProvider';
-import { useRouter } from 'next/navigation';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { MoodLevel } from '@/providers/mood/types';
 
 export default function MoodPage() {
   const { moods, isPending, isError, error } = useMoodState();
   const { getRecent, create } = useMoodActions();
-  const { user } = useAuthState();
-  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuthGuard();
   const [selectedMood, setSelectedMood] = useState<MoodLevel>(MoodLevel.Neutral);
   const [notes, setNotes] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
-    // Check both auth state and sessionStorage to handle page reloads
-    const sessionToken = sessionStorage.getItem('token');
+    // Wait for authentication loading to complete
+    if (isLoading) return;
     
-    if (!user?.token && !sessionToken) {
-      router.push('/auth/login');
-      return;
-    }
-    
-    // Only fetch data if we have a user or valid session
-    if (user?.token || sessionToken) {
+    // Only fetch data if authenticated
+    if (isAuthenticated) {
       getRecent();
     }
-  }, [user, getRecent, router]);
+  }, [isAuthenticated, isLoading, getRecent]);
+
+  // Show loading while session is being restored
+  if (isLoading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        Loading...
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

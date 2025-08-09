@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { useSeekerState, useSeekerActions } from '@/providers/seeker';
-import { useAuthState } from '@/providers/authProvider';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 import profileStyles from './profilestyles';
 import { ISeeker } from '@/providers/seeker/types';
@@ -10,7 +10,7 @@ import { ISeeker } from '@/providers/seeker/types';
 export default function ProfilePage() {
   const { profile, isPending, isError, error } = useSeekerState();
   const { getProfile, updateProfile } = useSeekerActions();
-  const { user } = useAuthState();
+  const { isAuthenticated, isLoading } = useAuthGuard();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<ISeeker>>({});
@@ -20,19 +20,16 @@ export default function ProfilePage() {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   useEffect(() => {
-    // Check both auth state and sessionStorage to handle page reloads
-    const sessionToken = sessionStorage.getItem('token');
+    // Wait for authentication loading to complete
+    if (isLoading) return;
     
-    if (!user?.token && !sessionToken) {
-      router.push('/auth/login');
-      return;
-    }
-    
-    // Only fetch profile if we have a user or valid session
-    if (user?.token || sessionToken) {
+    // Only fetch profile if authenticated
+    if (isAuthenticated) {
       getProfile();
     }
-    
+  }, [isAuthenticated, isLoading, getProfile]);
+
+  useEffect(() => {
     // Check server status
     const checkServerStatus = async () => {
       try {
@@ -48,7 +45,7 @@ export default function ProfilePage() {
     };
     
     checkServerStatus();
-  }, [user, getProfile, router]);
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -62,6 +59,15 @@ export default function ProfilePage() {
       });
     }
   }, [profile]);
+
+  // Show loading while session is being restored
+  if (isLoading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        Loading...
+      </div>
+    );
+  }
 
   const handleInputChange = (field: keyof ISeeker, value: string) => {
     setEditData(prev => ({
