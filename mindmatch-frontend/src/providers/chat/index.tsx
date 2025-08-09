@@ -118,14 +118,27 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch(setError()); // Clear any previous errors
     
     try {
-      console.log('Sending chat request with payload:', { Message: text });
+      // Force the correct format with explicit property name
+      const requestPayload = {
+        "Message": text.trim() // Ensure proper format and trim whitespace
+      };
+      
+      console.log('🚀 Sending chat request with payload:', requestPayload);
+      console.log('🚀 Request payload type:', typeof requestPayload.Message);
+      console.log('🚀 Request payload stringified:', JSON.stringify(requestPayload));
+      console.log('🚀 Object keys:', Object.keys(requestPayload));
       
       const res = await axiosInstance.post(
         "/api/services/app/Chat/GetChatbotReply",
-        { Message: text }
+        requestPayload,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
 
-      console.log('Chat API Response:', res.data);
+      console.log('✅ Chat API Response:', res.data);
 
       if (res.data.success && res.data.result?.reply) {
         const botMsg: IChatMessage = {
