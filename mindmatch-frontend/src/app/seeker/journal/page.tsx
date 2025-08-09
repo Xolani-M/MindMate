@@ -1,15 +1,16 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
-import Image from "next/image";
 import { JournalProvider, useJournalState, useJournalActions } from "@/providers/journal";
-import assessmentStyles from "../assessment/assessmentstyles";
+import { ProfessionalMoodSelector, EnhancedEmotionInput } from "@/components/ProfessionalMoodSelector";
+import { EnhancedJournalFeedback, FeedbackState } from "@/components/EnhancedJournalFeedback";
+import './mood-indicators.css';
+import './journal-styles.css';
 
 function JournalContent() {
   const { entries, isPending, isError, error, isSuccess } = useJournalState();
   const { getEntries, create, reset } = useJournalActions();
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>(FeedbackState.NONE);
   const [text, setText] = useState("");
   const [moodScore, setMoodScore] = useState(5);
   const [emotion, setEmotion] = useState("");
@@ -20,172 +21,185 @@ function JournalContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setHasSubmitted(true);
+    
+    // Show loading state
+    setFeedbackState(FeedbackState.LOADING);
+    
     const payload = { entryText: text, moodScore, emotion };
     await create(payload);
+    
+    // Clear form only after successful submission
     setText("");
     setMoodScore(5);
     setEmotion("");
     getEntries();
-    setShowFeedback(true);
   };
 
-  // Auto-hide feedback on state change
+  // Handle feedback state based on API response
   useEffect(() => {
-    if (!hasSubmitted) return;
-    if (isSuccess || isError || isPending) {
-      setShowFeedback(true);
-      const timer = setTimeout(() => {
-        setShowFeedback(false);
-        reset();
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (isPending) {
+      setFeedbackState(FeedbackState.LOADING);
+    } else if (isSuccess && feedbackState === FeedbackState.LOADING) {
+      setFeedbackState(FeedbackState.SUCCESS);
+    } else if (isError && feedbackState === FeedbackState.LOADING) {
+      setFeedbackState(FeedbackState.ERROR);
     }
-  }, [isSuccess, isError, isPending, reset, hasSubmitted]);
+  }, [isPending, isSuccess, isError, feedbackState]);
 
-  // Helper functions for styling
-  const getFeedbackBackground = () => {
-    if (isError) return '#fee2e2';
-    if (isSuccess) return '#d1fae5';
-    return '#e0e7ff';
-  };
-
-  const getFeedbackColor = () => {
-    if (isError) return '#991b1b';
-    if (isSuccess) return '#065f46';
-    return '#3730a3';
-  };
-
-  const getFeedbackMessage = () => {
-    if (isError) return `Failed to add journal entry. ${error || 'Please try again.'}`;
-    if (isSuccess) return 'Your journal entry was added successfully! Keep nurturing your mind.';
-    if (isPending) return 'Adding your journal entry...';
-    return '';
+  // Handle feedback dismissal
+  const handleFeedbackDismiss = () => {
+    setFeedbackState(FeedbackState.NONE);
+    reset(); // Reset the journal provider state
   };
 
   return (
     <>
+      {/* CSS for button spinner */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600&family=Georgia:wght@300;400;500&display=swap');
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+      
       <SeekerNavBar />
-      <div
-        style={{
-          ...(assessmentStyles.container as React.CSSProperties),
-          background: 'linear-gradient(135deg, #fafbff, #f0f4ff)',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-      {showFeedback && hasSubmitted && (
-        <div style={{
-          position: 'absolute',
-          top: 32,
-          left: 0,
-          right: 0,
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'center',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}>
-          <div style={{
-            background: getFeedbackBackground(),
-            color: getFeedbackColor(),
-            padding: 16,
-            borderRadius: 12,
-            minWidth: 320,
-            maxWidth: 500,
-            textAlign: 'center',
-            fontWeight: 600,
-            fontSize: 17,
-            boxShadow: '0 4px 24px rgba(99,102,241,0.10)',
-            opacity: showFeedback ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}>
-            {getFeedbackMessage()}
-          </div>
-        </div>
-      )}
-      <div style={assessmentStyles.orbTop as React.CSSProperties} />
-      <div style={assessmentStyles.orbBottom as React.CSSProperties} />
-      <main style={{ maxWidth: 600, width: "100%", zIndex: 2, position: "relative" }}>
-        <div
-          style={{
-            ...(assessmentStyles.card as React.CSSProperties),
-            background: '#fff',
-            color: '#1e293b',
-            zIndex: 10,
-            position: 'relative',
-          }}
-        >
-          <h1 style={{ fontSize: "2.2rem", fontWeight: 700, marginBottom: 8, textAlign: "center", color: "#6366f1" }}>Journal</h1>
-          <form onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
+      <div className="journal-container">
+      {/* Enhanced Feedback System */}
+      <EnhancedJournalFeedback
+        state={feedbackState}
+        errorMessage={error || undefined}
+        onDismiss={handleFeedbackDismiss}
+        dismissible={true}
+      />
+      
+      <main style={{ maxWidth: 800, width: "100%", margin: "0 auto", position: "relative" }}>
+        <div className="journal-card">
+          <h1 className="journal-title">My Journal</h1>
+          <p className="journal-subtitle">A space for your thoughts, reflections, and growth</p>
+          
+          <form onSubmit={handleSubmit} className="journal-form">
             <textarea
               value={text}
               onChange={e => setText(e.target.value)}
-              placeholder="Write your thoughts..."
-              rows={4}
-              style={{ width: "100%", borderRadius: 10, border: "1px solid #ccc", padding: 12, fontSize: 16, marginBottom: 12 }}
+              placeholder="Dear diary... What's on your mind today? Share your thoughts, feelings, dreams, or simply how your day went. This is your safe space to express yourself freely."
+              rows={6}
+              className="journal-textarea"
               required
             />
-            <div style={{ marginBottom: 8 }}>
-              <label htmlFor="moodScoreRange" style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>How was your mood today?</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f61e.svg" alt="Very Low" width={22} height={22} style={{ width: 22, height: 22 }} />
-                <input
-                  id="moodScoreRange"
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={moodScore}
-                  onChange={e => setMoodScore(Number(e.target.value))}
-                  style={{ flex: 1 }}
-                />
-                <Image src="https://twemoji.maxcdn.com/v/latest/svg/1f604.svg" alt="Very High" width={22} height={22} style={{ width: 22, height: 22 }} />
-                <span style={{ minWidth: 24, fontWeight: 600, color: '#6366f1' }}>{moodScore}</span>
-              </div>
-              <div style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
-                1 = Very Low, 5 = Neutral, 10 = Very High
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={emotion}
-                onChange={e => setEmotion(e.target.value)}
-                placeholder="Emotion (e.g. happy, sad)"
-                style={{ flex: 1, borderRadius: 8, border: "1px solid #ccc", padding: 6 }}
-                required
+            
+            <div style={{ marginBottom: 20 }}>
+              <ProfessionalMoodSelector
+                value={moodScore}
+                onChange={setMoodScore}
               />
-            <button
-              type="submit"
-              disabled={isPending || !text}
-              style={isPending || !text ? { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonPrimary}
-            >
-              {isPending ? "Saving..." : "Add Entry"}
-            </button>
+            </div>
+            
+            <div className="journal-input-group">
+              <EnhancedEmotionInput
+                value={emotion}
+                onChange={setEmotion}
+                placeholder="How are you feeling? (e.g., grateful, contemplative, hopeful)"
+              />
+              <button
+                type="submit"
+                disabled={feedbackState === FeedbackState.LOADING || !text.trim()}
+                className="journal-submit-btn"
+                style={{
+                  opacity: feedbackState === FeedbackState.LOADING || !text.trim() ? 0.6 : 1,
+                  cursor: feedbackState === FeedbackState.LOADING || !text.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {feedbackState === FeedbackState.LOADING && (
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid transparent',
+                    borderTop: '2px solid currentColor',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginRight: '8px'
+                  }} />
+                )}
+                {feedbackState === FeedbackState.LOADING ? "Saving..." : "Capture Moment"}
+              </button>
             </div>
           </form>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: 12 }}>Your Entries</h2>
-          {isPending && <div>Loading...</div>}
-          {isError && <div style={{ color: "#ef4444" }}>{error}</div>}
+          
+          <div className="journal-entries-section">
+            <h2 className="journal-entries-title">Previous Entries</h2>
+          
+          {/* Journal Statistics */}
+          {entries && entries.length > 0 && (
+            <div className="journal-stats">
+              <div className="journal-stat-item">
+                <span className="journal-stat-value">{entries.length}</span>
+                <span className="journal-stat-label">Total Entries</span>
+              </div>
+              <div className="journal-stat-item">
+                <span className="journal-stat-value">
+                  {entries.length > 0 ? Math.round(entries.reduce((sum, entry) => sum + (entry.moodScore || 0), 0) / entries.length) : 0}
+                </span>
+                <span className="journal-stat-label">Avg Mood</span>
+              </div>
+              <div className="journal-stat-item">
+                <span className="journal-stat-value">
+                  {entries.filter(entry => entry.createdAt && new Date(entry.createdAt).toDateString() === new Date().toDateString()).length}
+                </span>
+                <span className="journal-stat-label">Today</span>
+              </div>
+            </div>
+          )}
+          
+          {isPending && <div style={{ textAlign: 'center', padding: '24px', color: '#6366f1' }}>Loading your journal entries...</div>}
+          {isError && <div style={{ color: "#ef4444", textAlign: 'center', padding: '16px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+            <strong>Error loading entries:</strong> {error}
+          </div>}
+          
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {entries && entries.length > 0 ? (
               entries.map(entry => (
-                <div key={entry.id} style={{ background: "#f8fafc", borderRadius: 10, padding: 16, border: "1px solid #e5e7eb" }}>
-                  <div style={{ fontWeight: 500, marginBottom: 4 }}>{entry.entryText}</div>
-                  <div style={{ fontSize: 14, color: "#6366f1" }}>Mood: {entry.moodScore ?? "-"} | Emotion: {entry.emotion ?? "-"}</div>
-                  <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ""}</div>
+                <div key={entry.id} className="journal-entry">
+                  <div className="journal-entry-text">{entry.entryText}</div>
+                  <div className="journal-entry-meta">
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div className="journal-mood-indicator">
+                        <span>Mood: {entry.moodScore ?? "-"}</span>
+                      </div>
+                      {entry.emotion && (
+                        <span className="journal-emotion-tag">{entry.emotion}</span>
+                      )}
+                    </div>
+                    <div className="journal-timestamp">
+                      {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : ""}
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (
-              <div style={{ color: "#888" }}>No journal entries yet.</div>
+              <div className="journal-empty-state">
+                <div className="journal-empty-state-icon">✍️</div>
+                <h3 style={{ fontSize: '22px', fontWeight: '300', marginBottom: '12px', color: '#2c3e50', fontFamily: "'Playfair Display', serif" }}>
+                  Your Journal Awaits
+                </h3>
+                <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#7f8c8d', fontStyle: 'italic' }}>
+                  Every great story begins with a single word.<br />
+                  Share your thoughts, capture your moments, and begin your journey of self-reflection.
+                </p>
+              </div>
             )}
           </div>
-        </div>
+          </div> {/* Close journal-entries-section */}
+        </div> {/* Close journal-card */}
       </main>
-      </div>
+      </div> {/* Close journal-container */}
     </>
   );
 }
