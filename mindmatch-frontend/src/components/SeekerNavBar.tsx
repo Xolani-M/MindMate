@@ -4,45 +4,49 @@ import { useAuthState, useAuthActions } from '@/providers/authProvider';
 
 const navBarStyles: React.CSSProperties = {
   width: '100%',
-  background: '#6366f1',
+  background: '#4f46e5',
   color: 'white',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0 24px',
-  height: 56,
-  boxShadow: '0 2px 8px rgba(99,102,241,0.08)',
+  height: 64,
+  boxShadow: '0 4px 20px rgba(79, 70, 229, 0.25)',
   position: 'sticky',
   top: 0,
   zIndex: 100,
+  backdropFilter: 'blur(10px)',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
 };
 
 const navButtonStyles: React.CSSProperties = {
-  background: 'white',
-  color: '#6366f1',
-  border: 'none',
-  borderRadius: 6,
+  background: 'rgba(255, 255, 255, 0.15)',
+  color: 'white',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: 12,
   fontWeight: 600,
-  fontSize: 15,
-  padding: '7px 18px',
+  fontSize: 14,
+  padding: '10px 20px',
   marginLeft: 12,
   cursor: 'pointer',
-  boxShadow: '0 1px 4px #e0e7ef',
-  transition: 'background 0.18s',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  backdropFilter: 'blur(10px)',
 };
 
 const logoutButtonStyles: React.CSSProperties = {
-  background: '#ef4444',
+  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
   color: 'white',
-  border: 'none',
-  borderRadius: 6,
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: 12,
   fontWeight: 600,
-  fontSize: 15,
-  padding: '7px 18px',
+  fontSize: 14,
+  padding: '10px 20px',
   marginLeft: 16,
   cursor: 'pointer',
-  boxShadow: '0 1px 4px rgba(239, 68, 68, 0.3)',
-  transition: 'all 0.18s',
+  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  backdropFilter: 'blur(10px)',
 };
 
 export default function SeekerNavBar() {
@@ -91,34 +95,120 @@ export default function SeekerNavBar() {
 
   return (
     <nav style={navBarStyles}>
-      <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: 0.2, textShadow: '0 1px 2px #4f46e5' }}>
+      <span style={{ 
+        fontWeight: 700, 
+        fontSize: 20, 
+        letterSpacing: 0.5,
+        background: 'linear-gradient(45deg, #ffffff, #e0e7ff)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        textShadow: '0 2px 8px rgba(255, 255, 255, 0.3)',
+        filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))'
+      }}>
         MindMate
       </span>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <button style={navButtonStyles} onClick={() => router.push('/seeker/dashboard')}>Dashboard</button>
-        <button style={navButtonStyles} onClick={() => router.push('/seeker/chat')}>Chat</button>
-        <button style={navButtonStyles} onClick={() => router.push('/seeker/assessment')}>Assessment</button>
-        <button style={navButtonStyles} onClick={() => router.push('/seeker/journal')}>Journal</button>
-        <button style={navButtonStyles} onClick={() => router.push('/seeker/profile')}>Profile</button>
+        <button 
+          style={navButtonStyles} 
+          onClick={() => router.push('/seeker/dashboard')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Dashboard
+        </button>
+        <button 
+          style={navButtonStyles} 
+          onClick={() => router.push('/seeker/chat')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Chat
+        </button>
+        <button 
+          style={navButtonStyles} 
+          onClick={() => router.push('/seeker/assessment')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Assessment
+        </button>
+        <button 
+          style={navButtonStyles} 
+          onClick={() => router.push('/seeker/journal')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Journal
+        </button>
+        <button 
+          style={navButtonStyles} 
+          onClick={() => router.push('/seeker/profile')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Profile
+        </button>
         <button 
           style={{
             ...logoutButtonStyles,
-            background: isLoggingOut ? '#f59e0b' : '#ef4444',
+            background: isLoggingOut ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             cursor: isLoggingOut ? 'not-allowed' : 'pointer',
-            minWidth: '80px'
+            minWidth: '100px'
           }} 
           onClick={handleLogout}
           disabled={isLoggingOut}
           onMouseEnter={(e) => {
             if (!isLoggingOut) {
-              e.currentTarget.style.background = '#dc2626';
-              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
             }
           }}
           onMouseLeave={(e) => {
             if (!isLoggingOut) {
-              e.currentTarget.style.background = '#ef4444';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
               e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
             }
           }}
         >

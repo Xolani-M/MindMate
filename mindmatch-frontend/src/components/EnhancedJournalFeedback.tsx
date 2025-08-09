@@ -149,45 +149,48 @@ export const EnhancedJournalFeedback: React.FC<IEnhancedJournalFeedbackProps> = 
   const getFeedbackStyles = useCallback(() => {
     const baseStyles = {
       position: 'fixed' as const,
-      top: '20px',
+      top: '80px', // Positioned below navigation bar (typically 60-70px height)
       left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 1000,
+      transform: isVisible 
+        ? 'translateX(-50%) translateY(0px)' 
+        : 'translateX(-50%) translateY(-20px)',
+      zIndex: 1050, // Higher than most content but below modals
       minWidth: '320px',
       maxWidth: '500px',
+      width: '90%', // Responsive width
       padding: '16px 20px',
       borderRadius: '12px',
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      transition: 'all 0.3s ease',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       opacity: isVisible ? 1 : 0,
-      translateY: isVisible ? '0px' : '-20px',
       fontSize: '15px',
       fontWeight: '500',
       border: '1px solid',
+      backdropFilter: 'blur(10px)', // Added blur effect for better separation
     };
 
     switch (state) {
       case FeedbackState.LOADING:
         return {
           ...baseStyles,
-          background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+          background: 'linear-gradient(135deg, rgba(224, 231, 255, 0.95), rgba(199, 210, 254, 0.95))',
           color: '#3730a3',
           borderColor: '#a5b4fc',
         };
       case FeedbackState.SUCCESS:
         return {
           ...baseStyles,
-          background: 'linear-gradient(135deg, #d1fae5, #a7f3d0)',
+          background: 'linear-gradient(135deg, rgba(209, 250, 229, 0.95), rgba(167, 243, 208, 0.95))',
           color: '#065f46',
           borderColor: '#6ee7b7',
         };
       case FeedbackState.ERROR:
         return {
           ...baseStyles,
-          background: 'linear-gradient(135deg, #fee2e2, #fecaca)',
+          background: 'linear-gradient(135deg, rgba(254, 226, 226, 0.95), rgba(254, 202, 202, 0.95))',
           color: '#991b1b',
           borderColor: '#f87171',
         };
@@ -271,15 +274,36 @@ export const EnhancedJournalFeedback: React.FC<IEnhancedJournalFeedbackProps> = 
 
   return (
     <>
-      {/* CSS for spin animation */}
+      {/* CSS for animations and responsive design */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        
+        @media (max-width: 768px) {
+          .journal-feedback {
+            top: 70px !important;
+            width: 95% !important;
+            maxWidth: 95% !important;
+            minWidth: 280px !important;
+            padding: 14px 18px !important;
+            fontSize: 14px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .journal-feedback {
+            top: 60px !important;
+            width: 98% !important;
+            padding: 12px 16px !important;
+            fontSize: 13px !important;
+            minWidth: 260px !important;
+          }
+        }
       `}</style>
       
-      <div style={getFeedbackStyles()}>
+      <div style={getFeedbackStyles()} className="journal-feedback">
         {getFeedbackIcon()}
         <div style={{ flex: 1 }}>
           {getFeedbackMessage()}
@@ -300,7 +324,9 @@ export const EnhancedJournalFeedback: React.FC<IEnhancedJournalFeedbackProps> = 
               opacity: 0.7,
               transition: 'opacity 0.2s',
               fontSize: '16px',
-              lineHeight: 1
+              lineHeight: 1,
+              minWidth: '24px',
+              height: '24px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '1';
