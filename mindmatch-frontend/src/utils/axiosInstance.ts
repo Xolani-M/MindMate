@@ -33,6 +33,13 @@ axiosInstance.interceptors.request.use(
             const token: string | null = sessionStorage.getItem("token");
             if (token) {
                 config.headers["Authorization"] = `Bearer ${token}`;
+                console.log('🔑 Adding token to request:', {
+                    url: config.url,
+                    hasToken: !!token,
+                    tokenStart: token.substring(0, 20) + '...'
+                });
+            } else {
+                console.log('❌ No token found for request:', config.url);
             }
         }
         return config;

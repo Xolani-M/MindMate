@@ -22,7 +22,7 @@ const signupStyles = {
   card: {
     maxWidth: '600px',
     width: '100%',
-    padding: '24px',
+    padding: '16px',
     margin: '0 auto',
     boxSizing: 'border-box',
     minHeight: 'unset',

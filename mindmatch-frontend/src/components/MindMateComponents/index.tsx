@@ -50,29 +50,29 @@ export const GlowButton: React.FC<{
     onClick={onClick}
     {...props}
     style={{
-      background: styles.colors.gradient,
+      background: styles.colors.gradientHover, // Always use hover color
       border: 'none',
       borderRadius: '15px',
       height: '50px',
       fontSize: '16px',
       fontWeight: '600',
-      boxShadow: styles.shadows.soft,
-      transition: styles.transitions.smooth,
+      boxShadow: styles.shadows.glow, // Always use glow shadow
+      transition: 'none', // Remove all transitions - immediate response
       position: 'relative',
       overflow: 'hidden',
       ...props.style,
     }}
     onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
       const btn = e.target as HTMLButtonElement;
-      btn.style.background = styles.colors.gradientHover;
-      btn.style.boxShadow = styles.shadows.glow;
-      btn.style.transform = 'translateY(-2px)';
+      btn.style.background = styles.colors.gradientHover; // Keep same color
+      btn.style.boxShadow = styles.shadows.glow; // Keep same shadow
+      btn.style.transform = 'translateY(-2px)'; // Only transform changes
     }}
     onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
       const btn = e.target as HTMLButtonElement;
-      btn.style.background = styles.colors.gradient;
-      btn.style.boxShadow = styles.shadows.soft;
-      btn.style.transform = 'translateY(0)';
+      btn.style.background = styles.colors.gradientHover; // Keep same color
+      btn.style.boxShadow = styles.shadows.glow; // Keep same shadow  
+      btn.style.transform = 'translateY(0)'; // Reset transform
     }}
   >
     {children}

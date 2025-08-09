@@ -22,12 +22,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Initialize user state from sessionStorage on app start
     useEffect(() => {
+        console.log('🏁 Session restoration useEffect triggered, current state:', {
+            hasUser: !!state.user,
+            userToken: state.user?.token ? 'present' : 'missing',
+            seekerId: state.user?.seekerId
+        });
+        
+        // Check if user is already in state to avoid overwriting fresh login
+        if (state.user) {
+            console.log('👤 User already in state, skipping session restoration');
+            return;
+        }
+        
         const token = sessionStorage.getItem('token');
         const seekerId = sessionStorage.getItem('SeekerId');
         const role = sessionStorage.getItem('role');
         const userId = sessionStorage.getItem('Id');
         
         if (token) {
+            console.log('🔑 Found token in storage, attempting session restoration...');
             try {
                 const decoded = decodeToken(token);
                 const decodedSeekerId = decoded['seekerId'] || seekerId;
@@ -40,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (tokenExp && currentTime >= tokenExp) {
                     // Token is expired, clear session
-                    console.log('Token expired, clearing session');
+                    console.log('⏰ Token expired, clearing session');
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('SeekerId');
                     sessionStorage.removeItem('role');
@@ -54,24 +67,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     seekerId: decodedSeekerId || undefined,
                 };
                 
-                console.log('Restoring user session:', { 
-                    hasToken: !!token, 
+                console.log('🔄 Restoring user session:', { 
                     seekerId: decodedSeekerId, 
                     role: decodedRole,
-                    userId: decodedUserId 
+                    userId: decodedUserId,
+                    hasExistingUser: !!state.user
                 });
                 
                 dispatch(loginUserSuccess(user));
             } catch (error) {
-                console.error('Failed to restore user session:', error);
+                console.error('❌ Failed to restore user session:', error);
                 // Clear invalid token
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('SeekerId');
                 sessionStorage.removeItem('role');
                 sessionStorage.removeItem('Id');
             }
+        } else {
+            console.log('🚫 No token found in storage for session restoration');
         }
-    }, []);
+    }, []); // Only run once on mount - don't trigger on state changes
+
+    // Debug effect to monitor auth state changes
+    useEffect(() => {
+        console.log('🔄 Auth state changed:', {
+            hasUser: !!state.user,
+            userToken: state.user?.token ? 'present' : 'missing',
+            seekerId: state.user?.seekerId,
+            timestamp: new Date().toISOString()
+        });
+    }, [state.user]);
 
     // Reset Auth State
     const resetAuthState = useCallback(() => {
@@ -177,13 +202,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 password: user.password,
                 rememberClient: true
             };
+            
+            console.log('🚀 Attempting login with payload:', {
+                email: user.email,
+                hasPassword: !!user.password,
+                endpoint
+            });
+            
             const response = await instance.post(endpoint, payload);
+            
+            console.log('📦 Login response received:', {
+                status: response.status,
+                hasResult: !!response.data?.result,
+                hasAccessToken: !!response.data?.result?.accessToken,
+                fullResponse: response.data
+            });
+            
+            if (!response.data?.result?.accessToken) {
+                throw new Error('No access token received from server');
+            }
+            
             const token = response.data.result.accessToken;
             const decoded = decodeToken(token);
+
+            console.log('🔓 Decoded token contents:', {
+                allTokenData: decoded,
+                tokenKeys: Object.keys(decoded)
+            });
 
             const userRole = decoded[AbpTokenProperies.role];
             const userId = decoded[AbpTokenProperies.nameidentifier];
             const seekerId = decoded['seekerId'];
+
+            console.log('🔑 Login successful, storing token:', {
+                tokenLength: token.length,
+                tokenStart: token.substring(0, 20) + '...',
+                userRole,
+                userId,
+                seekerId
+            });
 
             sessionStorage.setItem('token', token);
             sessionStorage.setItem('role', userRole ?? '');
@@ -193,8 +250,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 sessionStorage.setItem('SeekerId', seekerId);
             }
 
+            console.log('✅ Token stored in sessionStorage, verifying:', {
+                storedToken: sessionStorage.getItem('token')?.substring(0, 20) + '...',
+                storedRole: sessionStorage.getItem('role'),
+                storedId: sessionStorage.getItem('Id'),
+                storedSeekerId: sessionStorage.getItem('SeekerId')
+            });
+
+            // Create user object with available data
+            const userObject = { ...user, token, seekerId };
+            console.log('👤 Dispatching user to state:', {
+                originalUser: user,
+                userObjectKeys: Object.keys(userObject),
+                userObject: userObject
+            });
+
             // Pass user object with token and seekerId to reducer
-            dispatch(loginUserSuccess({ ...user, token, seekerId }));
+            dispatch(loginUserSuccess(userObject));
+            
+            console.log('🎯 Login dispatch completed, current state will update');
+            
+            // Immediate redirect after state update
             router.push('/seeker/dashboard');
         } catch (error: unknown) {
             console.error('Login error:', error);

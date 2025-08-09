@@ -57,33 +57,24 @@ const SignupPage: React.FC = () => {
 
       <FloatingElement>
         <GlassCard style={signupStyles.card as React.CSSProperties}>
-          {/* MindMate Logo */}
+          {/* Header with MindMate logo */}
           <div style={{ 
             textAlign: 'center', 
-            marginBottom: '30px',
+            marginBottom: '20px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px'
+            gap: '8px'
           }}>
             <div style={{
-              fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
-              background: `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
               fontWeight: 'bold',
-              textShadow: '0 2px 10px rgba(74, 144, 226, 0.3)',
-              letterSpacing: '-1px'
-            }}>
-              🧠 MindMate
-            </div>
-            <div style={{
-              fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: styles.colors.primary,
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
               textAlign: 'center',
-              maxWidth: '280px'
+              marginBottom: '5px'
             }}>
-              Your AI-powered mental wellness companion
+              MindMate
             </div>
           </div>
 
@@ -99,8 +90,8 @@ const SignupPage: React.FC = () => {
           {/* Enhanced Error Display */}
           <SignupError error={isError ? errorMessage : undefined} />
 
-          {/* Success Message */}
-          <SignupSuccess visible={isSuccess} />
+          {/* Success/Loading Message */}
+          <SignupSuccess visible={isPending} />
 
           <Form
             form={form}
@@ -205,7 +196,7 @@ const SignupPage: React.FC = () => {
               <GlowButton 
                 htmlType="submit" 
                 loading={isPending} 
-                className="auth-button"
+                className={`auth-button ${isPending ? 'loading-button' : ''}`}
                 style={{ 
                   width: '100%', 
                   marginBottom: '15px',
@@ -213,26 +204,28 @@ const SignupPage: React.FC = () => {
                   fontSize: 'clamp(14px, 3.5vw, 16px)',
                   borderRadius: '12px',
                   fontWeight: '600',
-                  background: isPending 
-                    ? `linear-gradient(135deg, ${styles.colors.healingGlow}, ${styles.colors.primary})` 
-                    : `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+                  background: styles.colors.gradientHover, // Gradient as default
                   border: 'none',
-                  boxShadow: isPending 
-                    ? '0 4px 15px rgba(74, 144, 226, 0.2)' 
-                    : '0 6px 20px rgba(74, 144, 226, 0.4)',
+                  boxShadow: '0 4px 15px rgba(74, 144, 226, 0.2)',
+                  transition: 'none',
+                  color: isPending ? '#1f2937' : '#ffffff',
                 }}
                 disabled={isPending}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  if (!isPending) {
+                    e.currentTarget.style.background = styles.colors.primary; // Solid color on hover only when not loading
+                  }
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  if (!isPending) {
+                    e.currentTarget.style.background = styles.colors.gradientHover; // Back to gradient only when not loading
+                  }
+                }}
               >
                 {isPending ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="loading-pulse" style={{ fontSize: '16px' }}>🚀</span>
-                    <span>Creating your account...</span>
-                  </span>
+                  <span className="loading-text">Creating your account...</span>
                 ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '16px' }}>🌟</span>
-                    <span>Start Your Wellness Journey</span>
-                  </span>
+                  <span style={{ color: '#ffffff' }}>Start Your Wellness Journey</span>
                 )}
               </GlowButton>
             </Form.Item>

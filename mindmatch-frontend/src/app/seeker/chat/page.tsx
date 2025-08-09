@@ -1,16 +1,53 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { ChatProvider, useChatState, useChatActions } from "@/providers/chat";
+import { EnhancedChatError } from "@/components/EnhancedChatError";
 import { useAuthState } from "@/providers/authProvider";
+import { useRouter } from 'next/navigation';
 
 function ChatPage() {
   const { messages, loading, error } = useChatState();
-  const { sendUserMessage } = useChatActions();
+  const { sendUserMessage, clearError } = useChatActions();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const { user } = useAuthState();
+  const { user, isSuccess } = useAuthState();
+  const router = useRouter();
   const seekerName = user?.name || user?.displayName || null;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user?.token && isSuccess === false) {
+      console.log('No valid authentication, redirecting to login');
+      router.push('/auth/login');
+    }
+  }, [user?.token, isSuccess, router]);
+
+  // Show loading while checking authentication
+  if (!user?.token) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f8fafc",
+      }}>
+        <div style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: "32px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          color: "#6366f1",
+          fontSize: "16px",
+          fontWeight: 500,
+        }}>
+          Checking authentication...
+        </div>
+      </div>
+    );
+  }
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +139,21 @@ function ChatPage() {
               <div style={{ color: "#888", fontSize: 17, textAlign: "center", marginTop: 32 }}>Ask me anything about your wellness journey!</div>
             )}
             {loading && <div style={{ color: "#6366f1", fontSize: 17, marginTop: 8 }}>Thinking...</div>}
-            {error && <div style={{ color: "#ef4444", fontSize: 17, marginTop: 8 }}>{error}</div>}
+            {error && (
+              <div style={{ marginTop: 16, padding: '0 4px' }}>
+                <EnhancedChatError 
+                  error={error}
+                  onRetry={() => {
+                    // Get the last user message and resend it
+                    const lastUserMessage = messages?.findLast(msg => msg.sender === 'user');
+                    if (lastUserMessage) {
+                      sendUserMessage(lastUserMessage.text);
+                    }
+                  }}
+                  onClear={clearError}
+                />
+              </div>
+            )}
           </div>
           {/* Chatbot-style input bar, button unchanged */}
           <form onSubmit={handleSend} style={{

@@ -27,6 +27,15 @@ export default function LoginPage() {
     resetAuthState();
   }, [resetAuthState]);
 
+  // Handle successful login - redirect happens in auth provider
+  React.useEffect(() => {
+    if (isSuccess) {
+      console.log('🎉 Login success detected in login page, auth provider will handle redirect');
+      // Do NOT reset auth state here - it would clear the user data!
+      // The auth provider already handles the redirect after setting user state
+    }
+  }, [isSuccess]);
+
   return (
     <div
       style={{
@@ -50,33 +59,24 @@ export default function LoginPage() {
 
       <FloatingElement>
         <GlassCard style={loginStyles.card as React.CSSProperties}>
-          {/* MindMate Logo */}
+          {/* Header with MindMate logo */}
           <div style={{ 
             textAlign: 'center', 
-            marginBottom: '30px',
+            marginBottom: '20px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px'
+            gap: '8px'
           }}>
             <div style={{
-              fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
-              background: `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
               fontWeight: 'bold',
-              textShadow: '0 2px 10px rgba(74, 144, 226, 0.3)',
-              letterSpacing: '-1px'
-            }}>
-              🧠 MindMate
-            </div>
-            <div style={{
-              fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: styles.colors.primary,
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
               textAlign: 'center',
-              maxWidth: '280px'
+              marginBottom: '5px'
             }}>
-              Your AI-powered mental wellness companion
+              MindMate
             </div>
           </div>
 
@@ -130,7 +130,6 @@ export default function LoginPage() {
                   borderRadius: '12px',
                   padding: 'clamp(12px, 3vw, 16px)',
                   fontSize: 'clamp(14px, 3.5vw, 16px)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 autoComplete="email"
                 size="large"
@@ -165,7 +164,6 @@ export default function LoginPage() {
                   borderRadius: '12px',
                   padding: 'clamp(12px, 3vw, 16px)',
                   fontSize: 'clamp(14px, 3.5vw, 16px)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 value={passwordValue}
                 onChange={e => setPasswordValue(e.target.value)}
@@ -203,7 +201,7 @@ export default function LoginPage() {
               <GlowButton 
                 htmlType="submit" 
                 loading={isPending} 
-                className="auth-button"
+                className={`auth-button ${isPending ? 'loading-button' : ''}`}
                 style={{ 
                   width: '100%', 
                   marginBottom: '15px',
@@ -211,35 +209,37 @@ export default function LoginPage() {
                   fontSize: 'clamp(14px, 3.5vw, 16px)',
                   borderRadius: '12px',
                   fontWeight: '600',
-                  background: isPending 
-                    ? `linear-gradient(135deg, ${styles.colors.healingGlow}, ${styles.colors.primary})` 
-                    : `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+                  background: styles.colors.gradientHover, // Gradient as default
                   border: 'none',
-                  boxShadow: isPending 
-                    ? '0 4px 15px rgba(74, 144, 226, 0.2)' 
-                    : '0 6px 20px rgba(74, 144, 226, 0.4)',
+                  boxShadow: '0 4px 15px rgba(74, 144, 226, 0.2)',
+                  transition: 'none',
+                  color: isPending ? '#1f2937' : '#ffffff',
                 }}
                 disabled={isPending}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  if (!isPending) {
+                    e.currentTarget.style.background = styles.colors.primary; // Solid color on hover only when not loading
+                  }
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  if (!isPending) {
+                    e.currentTarget.style.background = styles.colors.gradientHover; // Back to gradient only when not loading
+                  }
+                }}
               >
                 {isPending ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="loading-pulse" style={{ fontSize: '16px' }}>🔐</span>
-                    <span>Signing you in...</span>
-                  </span>
+                  <span className="loading-text">Signing you in...</span>
                 ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '16px' }}>🚀</span>
-                    <span>Continue Your Journey</span>
-                  </span>
+                  <span style={{ color: '#ffffff' }}>Continue Your Journey</span>
                 )}
               </GlowButton>
             </Form.Item>
 
             {/* Enhanced Error Display */}
             <LoginError error={isError ? errorMessage : undefined} />
-
-            {/* Success Message */}
-            <LoginSuccess visible={isSuccess} />
+            
+            {/* Success/Loading Display */}
+            <LoginSuccess visible={isPending} />
           </Form>
 
           <Divider style={loginStyles.divider as React.CSSProperties}>or</Divider>

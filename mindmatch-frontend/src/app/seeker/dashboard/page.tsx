@@ -247,19 +247,26 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    console.log('useEffect user:', user);
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
     
-    // Check both auth state and sessionStorage to handle page reloads
     const sessionToken = sessionStorage.getItem('token');
     
-    if (!user?.token && !sessionToken) {
-      router.push('/auth/login');
-      return;
-    }
+    console.log('🔍 Dashboard useEffect debug:', {
+      userFromContext: user,
+      userHasToken: !!user?.token,
+      sessionToken: sessionToken ? sessionToken.substring(0, 20) + '...' : 'none',
+      sessionRole: sessionStorage.getItem('role'),
+      sessionId: sessionStorage.getItem('Id'),
+      sessionSeekerId: sessionStorage.getItem('SeekerId')
+    });
     
-    // Only fetch dashboard if we have a user or valid session
     if (user?.token || sessionToken) {
+      console.log('✅ Found authentication, loading dashboard');
       getMyDashboard();
+    } else {
+      console.log('❌ No authentication found, redirecting to login');
+      router.push('/auth/login');
     }
   }, [user, getMyDashboard, router]);
 

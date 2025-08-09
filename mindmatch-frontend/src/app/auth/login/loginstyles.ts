@@ -64,7 +64,6 @@ const loginStyles = {
     border: undefined, // set in component
     padding: 'clamp(10px, 3vw, 14px)', // Responsive padding
     fontSize: 'clamp(14px, 4vw, 16px)', // Responsive font size
-    transition: 'all 0.3s ease',
     minHeight: '44px', // Touch-friendly minimum height
   },
   rememberRow: {

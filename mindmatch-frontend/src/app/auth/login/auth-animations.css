@@ -1,31 +1,50 @@
-/* Authentication feedback animations */
+/* Authentication feedback animations - immediate response, no fading */
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Remove all fading transitions for immediate button response */
+.auth-button {
+  transition: none !important; /* No fading transitions */
 }
 
-@keyframes successSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.auth-button:hover {
+  transition: none !important; /* No fading transitions */
 }
 
+/* Override Ant Design default animations for immediate feedback */
+.ant-alert {
+  transition: none !important; /* No fading for alerts */
+  animation: none !important; /* No slide-in animations */
+}
+
+.ant-alert-slide-up-enter,
+.ant-alert-slide-up-appear,
+.ant-alert-slide-up-leave {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Remove any form transitions */
+.ant-form-item {
+  transition: none !important;
+}
+
+.ant-input {
+  transition: none !important;
+}
+
+.ant-btn {
+  transition: none !important;
+}
+
+/* Keep only essential animations for loading states */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes shimmer {
@@ -37,32 +56,6 @@
   100% { 
     background-position: calc(200px + 100%) 0;
   }
-}
-
-/* Responsive utilities for super smooth UX */
-.auth-container {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.auth-form-item {
-  transition: all 0.2s ease-out;
-}
-
-.auth-form-item:focus-within {
-  transform: translateY(-2px);
-}
-
-.auth-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.auth-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
-}
-
-.auth-button:active {
-  transform: translateY(0);
 }
 
 /* Mobile responsiveness enhancements */
@@ -85,10 +78,33 @@
   animation: shimmer 1.5s infinite;
 }
 
-.slide-in {
-  animation: slideIn 0.3s ease-out;
+/* Loading button specific styles to prevent hover background changes */
+.ant-btn.loading-button {
+  transition: none !important;
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important; /* Force gradient during loading */
 }
 
-.success-slide-in {
-  animation: successSlideIn 0.5s ease-out;
+.ant-btn.loading-button:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important; /* Keep gradient on hover during loading */
+  border-color: inherit !important;
+  transition: none !important;
+}
+
+/* Ensure loading spinner is visible and properly sized */
+.ant-btn .anticon-loading {
+  display: inline-block !important;
+  font-size: 14px !important;
+  margin-right: 8px !important;
+}
+
+/* Loading text should be dark and bold for visibility */
+.loading-text {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+
+/* Enhanced spinner visibility */
+.anticon-loading svg {
+  width: 16px !important;
+  height: 16px !important;
 }

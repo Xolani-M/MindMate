@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Alert } from 'antd';
 
 interface LoginErrorProps {
@@ -14,56 +14,61 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
     if (errorMessage.includes('Invalid email or password')) {
       return {
         type: 'error' as const,
-        icon: '🔐',
-        title: 'Authentication Failed',
-        description: errorMessage,
-        showIcon: true,
+        title: 'Invalid Credentials',
+        description: 'Please check your email and password and try again.',
+        showIcon: false,
       };
     }
     
     if (errorMessage.includes('verify your email')) {
       return {
         type: 'warning' as const,
-        icon: '📧',
         title: 'Email Verification Required',
-        description: errorMessage,
-        showIcon: true,
+        description: 'Please verify your email address before logging in.',
+        showIcon: false,
+      };
+    }
+    
+    if (errorMessage.includes('not active')) {
+      return {
+        type: 'warning' as const,
+        title: 'Account Inactive',
+        description: 'Your account is not active. Please contact support.',
+        showIcon: false,
       };
     }
     
     if (errorMessage.includes('connection') || errorMessage.includes('network')) {
       return {
         type: 'error' as const,
-        icon: '🌐',
         title: 'Connection Problem',
-        description: errorMessage,
-        showIcon: true,
+        description: 'Unable to connect to the server. Please check your internet connection.',
+        showIcon: false,
       };
     }
     
     if (errorMessage.includes('locked')) {
       return {
         type: 'warning' as const,
-        icon: '🔒',
         title: 'Account Locked',
-        description: errorMessage,
-        showIcon: true,
+        description: 'Your account has been temporarily locked. Please try again later.',
+        showIcon: false,
       };
     }
     
+    // Default fallback - show only a clean message without redundancy
     return {
       type: 'error' as const,
-      icon: '⚠️',
       title: 'Login Failed',
-      description: errorMessage,
-      showIcon: true,
+      description: 'Please check your credentials and try again.',
+      showIcon: false,
     };
   };
 
   const config = getErrorConfig(error);
 
   return (
-    <div className="slide-in" style={{ 
+    <div style={{ 
       marginBottom: '16px'
     }}>
       <Alert
@@ -79,7 +84,6 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
         }}
         message={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>{config.icon}</span>
             <strong>{config.title}</strong>
           </div>
         }
@@ -93,79 +97,6 @@ interface LoginSuccessProps {
   visible: boolean;
 }
 
-export const LoginSuccess: React.FC<LoginSuccessProps> = ({ visible }) => {
-  const [dots, setDots] = useState('');
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    // Animated dots
-    const dotInterval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 500);
-
-    // Progress simulation
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + 10;
-        return newProgress > 100 ? 100 : newProgress;
-      });
-    }, 100);
-
-    return () => {
-      clearInterval(dotInterval);
-      clearInterval(progressInterval);
-    };
-  }, [visible]);
-
-  if (!visible) return null;
-
-  return (
-    <div className="success-slide-in" style={{ 
-      marginBottom: '16px'
-    }}>
-      <Alert
-        type="success"
-        showIcon
-        message={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="loading-pulse" style={{ 
-              fontSize: '16px'
-            }}>✅</span>
-            <strong>Welcome Back!</strong>
-          </div>
-        }
-        description={
-          <div>
-            <div style={{ marginBottom: '8px' }}>
-              Taking you to your dashboard{dots}
-            </div>
-            <div style={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: 'rgba(52, 211, 153, 0.2)',
-              borderRadius: '2px',
-              overflow: 'hidden'
-            }}>
-              <div className="loading-shimmer" style={{
-                width: `${progress}%`,
-                height: '100%',
-                backgroundColor: '#34d399',
-                borderRadius: '2px',
-                transition: 'width 0.1s ease-out'
-              }} />
-            </div>
-          </div>
-        }
-        style={{
-          borderRadius: '12px',
-          fontSize: '14px',
-          lineHeight: '1.4',
-          border: 'none',
-          boxShadow: '0 4px 12px rgba(52, 211, 153, 0.2)',
-        }}
-      />
-    </div>
-  );
+export const LoginSuccess: React.FC<LoginSuccessProps> = () => {
+  return null; // No feedback box needed - using button text only
 };
