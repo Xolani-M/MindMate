@@ -1,4 +1,36 @@
-const assessmentStyles = {
+/**
+ * @fileoverview Assessment Page Styling Configuration
+ * @description Comprehensive styling definitions for assessment interface components with improved accessibility
+ * @author MINDMATE Development Team
+ * @version 1.0.0
+ */
+
+//#region Type Definitions
+
+/**
+ * CSS Properties interface for TypeScript compatibility
+ * Extends React.CSSProperties with media query support
+ */
+interface IAssessmentStyles {
+  [key: string]: React.CSSProperties & {
+    '@media (max-width: 768px)'?: React.CSSProperties;
+    '@media (max-width: 480px)'?: React.CSSProperties;
+    '@media (hover: hover)'?: {
+      ':hover'?: React.CSSProperties;
+    };
+    '@media (focus)'?: React.CSSProperties;
+  };
+}
+
+//#endregion Type Definitions
+
+//#region Constants
+
+/**
+ * Assessment styling configuration object
+ * Provides comprehensive styling for all assessment interface components
+ */
+const assessmentStyles: IAssessmentStyles = {
   container: {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #6366f1 0%, #a5b4fc 100%)',
@@ -205,26 +237,51 @@ const assessmentStyles = {
     },
   },
   selectInput: {
-    padding: '12px 16px',
+    padding: '14px 40px 14px 18px',
     borderRadius: '12px',
-    border: '2px solid #e2e8f0',
+    border: '2px solid #cbd5e1',
     fontSize: '16px',
-    background: '#fff',
+    fontWeight: '500',
+    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+    color: '#1e293b',
     transition: 'all 0.3s ease',
-    minWidth: '200px',
+    minWidth: '280px',
+    width: '100%',
+    maxWidth: '400px',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+    backgroundPosition: 'right 16px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '16px',
+    cursor: 'pointer',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
     '@media (focus)': {
       borderColor: '#6366f1',
-      boxShadow: '0 0 0 3px rgba(99,102,241,0.1)',
+      boxShadow: '0 0 0 3px rgba(99,102,241,0.1), 0 1px 3px rgba(0, 0, 0, 0.1)',
+      outline: 'none',
+    },
+    '@media (hover: hover)': {
+      ':hover': {
+        borderColor: '#94a3b8',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+      },
     },
     '@media (max-width: 768px)': {
-      padding: '10px 14px',
+      padding: '12px 36px 12px 16px',
       fontSize: '15px',
-      minWidth: '180px',
+      minWidth: '240px',
+      backgroundPosition: 'right 12px center',
+      backgroundSize: '14px',
     },
     '@media (max-width: 480px)': {
-      padding: '8px 12px',
+      padding: '10px 32px 10px 14px',
       fontSize: '14px',
-      minWidth: '160px',
+      minWidth: '200px',
+      backgroundPosition: 'right 10px center',
+      backgroundSize: '12px',
     },
   },
   textareaInput: {
@@ -252,4 +309,10 @@ const assessmentStyles = {
   },
 };
 
+//#endregion Constants
+
+/**
+ * Default export of assessment styling configuration
+ * Provides type-safe styling objects for assessment components
+ */
 export default assessmentStyles;
