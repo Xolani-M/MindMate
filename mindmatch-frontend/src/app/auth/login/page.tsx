@@ -6,18 +6,25 @@ import { MailOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@a
 import { FloatingElement, GlassCard, GlowButton } from '@/components/MindMateComponents';
 import { styles } from '@/components/styles';
 import loginStyles from './loginstyles';
+import { LoginError, LoginSuccess } from './LoginFeedback';
 import { useRouter } from 'next/navigation';
+import './login.module.css';
 
 const { Title, Text } = Typography;
 
 const passwordIconRender = (visible: boolean) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />);
 
 export default function LoginPage() {
-  const { loginUser } = useAuthActions();
-  const { isPending, isError, isSuccess } = useAuthState();
+  const { loginUser, resetAuthState } = useAuthActions();
+  const { isPending, isError, isSuccess, errorMessage } = useAuthState();
   const [form] = Form.useForm();
   const [passwordValue, setPasswordValue] = useState('');
   const router = useRouter();
+
+  // Clear any previous errors when component mounts
+  React.useEffect(() => {
+    resetAuthState();
+  }, [resetAuthState]);
 
   return (
     <div
@@ -56,28 +63,56 @@ export default function LoginPage() {
             layout="vertical"
             size="large"
             onFinish={async (values) => {
-              await loginUser({
-                email: values.email,
-                password: values.password,
-              });
-              // Redirect to dashboard after successful login
-              router.push('/seeker/dashboard');
+              if (isPending) return; // Prevent multiple submissions
+              
+              try {
+                await loginUser({
+                  email: values.email?.trim(),
+                  password: values.password,
+                });
+                // Navigation is handled in the auth provider after successful login
+              } catch (error) {
+                console.error('Login submission error:', error);
+                // Error handling is managed by the auth provider
+              }
             }}
+            onFinishFailed={(errorInfo) => {
+              console.log('Form validation failed:', errorInfo);
+            }}
+            disabled={isPending}
           >
-            <Form.Item name="email" rules={[{ required: true, message: 'Please enter your email' }, { type: 'email', message: 'Please enter a valid email' }]}> 
+            <Form.Item 
+              name="email" 
+              rules={[
+                { required: true, message: 'Please enter your email address' }, 
+                { type: 'email', message: 'Please enter a valid email address' }
+              ]}
+              hasFeedback
+            > 
               <Input
                 prefix={<MailOutlined style={{ color: styles.colors.primary }} />}
-                placeholder="Your email address"
+                placeholder="Enter your email address"
                 style={{
                   ...loginStyles.formInput as React.CSSProperties,
                   border: `2px solid ${styles.colors.healingGlow}`,
                 }}
+                autoComplete="email"
+                size="large"
+                disabled={isPending}
               />
             </Form.Item>
-            <Form.Item name="password" rules={[{ required: true, message: 'Please enter your password' }]}> 
+
+            <Form.Item 
+              name="password" 
+              rules={[
+                { required: true, message: 'Please enter your password' },
+                { min: 6, message: 'Password must be at least 6 characters' }
+              ]}
+              hasFeedback
+            > 
               <Input.Password
                 prefix={<LockOutlined style={{ color: styles.colors.primary }} />}
-                placeholder="Your password"
+                placeholder="Enter your password"
                 iconRender={passwordIconRender}
                 style={{
                   ...loginStyles.formInput as React.CSSProperties,
@@ -85,24 +120,44 @@ export default function LoginPage() {
                 }}
                 value={passwordValue}
                 onChange={e => setPasswordValue(e.target.value)}
-                // Loader and feedback handled below
+                autoComplete="current-password"
+                size="large"
+                disabled={isPending}
               />
             </Form.Item>
-            <Form.Item>
-              <Checkbox style={{ color: '#666' }}>Remember me</Checkbox>
+            <Form.Item style={{ marginBottom: '16px' }}>
+              <div style={loginStyles.rememberRow as React.CSSProperties}>
+                <Checkbox style={{ color: '#666', fontSize: 'clamp(14px, 3.5vw, 16px)' }}>
+                  Remember me
+                </Checkbox>
+                <Button 
+                  type="link" 
+                  style={{ 
+                    ...loginStyles.link as React.CSSProperties, 
+                    color: styles.colors.primary 
+                  }}
+                  disabled={isPending}
+                >
+                  Forgot password?
+                </Button>
+              </div>
             </Form.Item>
             <Form.Item>
-              <Button type="link" style={{ color: styles.colors.primary, padding: 0 }}>Forgot password?</Button>
+              <GlowButton 
+                htmlType="submit" 
+                loading={isPending} 
+                style={{ width: '100%', marginBottom: '15px' }}
+                disabled={isPending}
+              >
+                {isPending ? 'Signing you in...' : 'Continue Your Journey'}
+              </GlowButton>
             </Form.Item>
-            <Form.Item>
-              <GlowButton htmlType="submit" loading={isPending} style={{ width: '100%', marginBottom: '15px' }}>Continue Your Journey</GlowButton>
-            </Form.Item>
-            {isError && (
-              <div style={{ color: 'red', marginBottom: '10px' }}>Login failed. Please try again.</div>
-            )}
-            {isSuccess && (
-              <div style={{ color: 'green', marginBottom: '10px' }}>Login successful! Redirecting...</div>
-            )}
+
+            {/* Enhanced Error Display */}
+            <LoginError error={isError ? errorMessage : undefined} />
+
+            {/* Success Message */}
+            <LoginSuccess visible={isSuccess} />
           </Form>
 
           <Divider style={loginStyles.divider as React.CSSProperties}>or</Divider>

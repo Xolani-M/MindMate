@@ -17,7 +17,8 @@ export const registerSeekerPending = createAction<IAuthStateContext>(
     AuthActionEnums.registerSeekerPending, () => ({
         isPending: true,
         isSuccess: false,
-        isError: false
+        isError: false,
+        errorMessage: undefined
     })
 );
 
@@ -26,15 +27,17 @@ export const registerSeekerSuccess = createAction<IAuthStateContext, IUser>(
         isPending: false,
         isSuccess: true,
         isError: false,
+        errorMessage: undefined,
         user
     })
 );
 
-export const registerSeekerError = createAction<IAuthStateContext>(
-    AuthActionEnums.registerSeekerError, () => ({
+export const registerSeekerError = createAction<IAuthStateContext, string>(
+    AuthActionEnums.registerSeekerError, (errorMessage: string) => ({
         isPending: false,
         isSuccess: false,
-        isError: true
+        isError: true,
+        errorMessage
     })
 );
 
@@ -42,7 +45,8 @@ export const loginUserPending = createAction<IAuthStateContext>(
     AuthActionEnums.loginUserPending, () => ({
         isPending: true,
         isSuccess: false,
-        isError: false
+        isError: false,
+        errorMessage: undefined
     })
 );
 
@@ -51,14 +55,16 @@ export const loginUserSuccess = createAction<IAuthStateContext, IUser>(
         isPending: false,
         isSuccess: true,
         isError: false,
+        errorMessage: undefined,
         user
     })
 );
 
-export const loginUserError = createAction<IAuthStateContext>(
-    AuthActionEnums.loginUserError, () => ({
+export const loginUserError = createAction<IAuthStateContext, string>(
+    AuthActionEnums.loginUserError, (errorMessage: string) => ({
         isPending: false,
         isSuccess: false,
-        isError: true
+        isError: true,
+        errorMessage
     })
 );

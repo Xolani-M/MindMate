@@ -16,6 +16,7 @@ export interface IAuthStateContext {
     isPending: boolean;
     isSuccess: boolean;
     isError: boolean; 
+    errorMessage?: string; // Specific error message for user feedback
     user?: IUser;
 }
 
@@ -29,6 +30,7 @@ export const INITIAL_STATE: IAuthStateContext = {
     isPending: false,
     isSuccess: false,
     isError: false,
+    errorMessage: undefined,
 }
 
 export const AuthStateContext = createContext<IAuthStateContext>(INITIAL_STATE);

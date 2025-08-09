@@ -53,6 +53,72 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         dispatch({ type: 'RESET_AUTH_STATE', payload: INITIAL_STATE });
     }, [dispatch]);
 
+    // Helper function to extract user-friendly error messages
+    const getErrorMessage = (error: unknown): string => {
+        try {
+            // Type guard for axios error
+            const axiosError = error as {
+                response?: {
+                    data?: {
+                        error?: { message?: string };
+                        message?: string;
+                    };
+                    status?: number;
+                };
+                message?: string;
+            };
+
+            const response = axiosError.response;
+            
+            // Check for specific backend error messages
+            if (response?.data?.error?.message) {
+                const message = response.data.error.message;
+                
+                // Map technical errors to user-friendly messages
+                if (message.includes('InvalidUserNameOrPassword')) {
+                    return 'Invalid email or password. Please check your credentials and try again.';
+                }
+                if (message.includes('UserEmailIsNotConfirmed')) {
+                    return 'Please verify your email address before logging in.';
+                }
+                if (message.includes('UserIsNotActive')) {
+                    return 'Your account is not active. Please contact support.';
+                }
+                if (message.includes('LockedOut')) {
+                    return 'Your account has been temporarily locked. Please try again later.';
+                }
+                
+                return message;
+            }
+            
+            // Check for HTTP status codes
+            if (response?.status === 400 || response?.status === 401) {
+                return 'Invalid email or password. Please check your credentials.';
+            }
+            if (response?.status === 403) {
+                return 'Access denied. Please check your account status.';
+            }
+            if (response?.status === 429) {
+                return 'Too many login attempts. Please wait a moment and try again.';
+            }
+            if (response?.status && response.status >= 500) {
+                return 'Server error. Please try again in a moment.';
+            }
+            
+            // Network or connection errors
+            if (axiosError.message?.includes('Network Error')) {
+                return 'Connection failed. Please check your internet connection.';
+            }
+            if (axiosError.message?.includes('timeout')) {
+                return 'Request timed out. Please try again.';
+            }
+        } catch {
+            // If error parsing fails, return default message
+        }
+        
+        return 'Login failed. Please check your credentials and try again.';
+    };
+
     // Register Seeker
     const registerSeeker = useCallback(async (user: IUser) => {
         dispatch(registerSeekerPending());
@@ -71,12 +137,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             router.push('/login');
         } catch (error) {
             console.error("❌ Registration error:", error);
-            dispatch(registerSeekerError());
-            if (error instanceof Error) {
-                console.error(error.message);
-            } else {
-                console.error(error);
-            }
+            const errorMessage = getErrorMessage(error);
+            dispatch(registerSeekerError(errorMessage));
         }
     }, [dispatch, router, instance]);
 
@@ -110,16 +172,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             dispatch(loginUserSuccess({ ...user, token, seekerId }));
             router.push('/seeker/dashboard');
         } catch (error: unknown) {
-            if (typeof error === 'object' && error !== null && 'response' in error) {
-                // @ts-expect-error: error.response is expected from axios
-                console.error('Login error response:', error.response.data);
-            }
-            if (error instanceof Error) {
-                console.error(error.message);
-            } else {
-                console.error(error);
-            }
-            dispatch(loginUserError());
+            console.error('Login error:', error);
+            const errorMessage = getErrorMessage(error);
+            dispatch(loginUserError(errorMessage));
         }
     }, [dispatch, router, instance]);
 
