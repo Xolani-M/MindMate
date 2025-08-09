@@ -1,1 +1,3 @@
-export { default } from './ChatWidget';
+import ChatWidget from './ChatWidget';
+
+export default ChatWidget;

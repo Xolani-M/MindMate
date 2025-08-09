@@ -52,6 +52,9 @@ public class ChatbotService : ITransientDependency
                     throw new InvalidOperationException("Gemini API endpoint is not configured. Please set Gemini:ApiEndpoint in configuration.");
 
                 _httpClient = new HttpClient();
+                _httpClient.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
             catch (Exception ex)
             {
@@ -141,14 +144,10 @@ public class ChatbotService : ITransientDependency
                 
                 var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
-                var endpointWithKey = _geminiEndpoint.Contains("?")
-                    ? _geminiEndpoint + "&key=" + _geminiKey
-                    : _geminiEndpoint + "?key=" + _geminiKey;
-                    
-                var request = new HttpRequestMessage(HttpMethod.Post, endpointWithKey);
-                request.Content = content;
+                // Use relative URL since we set BaseAddress
+                var relativeEndpoint = "v1beta/models/gemini-2.0-flash:generateContent?key=" + _geminiKey;
                 
-                var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.PostAsync(relativeEndpoint, content);
                 response.EnsureSuccessStatusCode();
                 
                 var responseString = await response.Content.ReadAsStringAsync();

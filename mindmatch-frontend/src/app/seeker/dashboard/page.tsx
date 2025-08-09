@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import dashboardStyles from './dashboardstyles';
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { ChatProvider } from '@/providers/chat';
-import ChatWidget from '@/components/ChatWidget';
+import ChatWidget from '@/components/ChatWidget/ChatWidget';
 import Icons from '@/components/Icons';
 import { ModernLoadingState, ModernErrorState } from '@/components/LoadingStates';
 
