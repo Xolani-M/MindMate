@@ -71,18 +71,30 @@ namespace MINDMATE.Web.Host.Startup
 
             services.AddSignalR();
 
-            // Configure CORS for angular2 UI
+            // Configure CORS for frontend UI
             services.AddCors(
                 options => options.AddPolicy(
                     _defaultCorsPolicyName,
                     builder => builder
-                        .WithOrigins(
-                            // App:CorsOrigins in appsettings.json can contain more than one address separated by comma.
-                            _appConfiguration["App:CorsOrigins"]
+                        .SetIsOriginAllowed(origin =>
+                        {
+                            // Allow localhost for development
+                            if (origin.Contains("localhost")) return true;
+                            
+                            // Allow production Vercel domain
+                            if (origin == "https://mind-mate-ttkn.vercel.app") return true;
+                            
+                            // Allow all Vercel preview deployments
+                            if (origin.Contains("mind-mate-ttkn") && origin.Contains("vercel.app")) return true;
+                            
+                            // Allow configured origins from appsettings
+                            var configuredOrigins = _appConfiguration["App:CorsOrigins"]
                                 .Split(",", StringSplitOptions.RemoveEmptyEntries)
                                 .Select(o => o.RemovePostFix("/"))
-                                .ToArray()
-                        )
+                                .ToArray();
+                            
+                            return configuredOrigins.Contains(origin);
+                        })
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials()
