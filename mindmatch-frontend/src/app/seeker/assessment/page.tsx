@@ -92,9 +92,35 @@ const AssessmentForm: React.FC = () => {
             position: 'relative',
           }}
         >
-          <h1 style={{ fontSize: "2.5rem", fontWeight: 700, marginBottom: 8, textAlign: "center", color: "#6366f1" }}>Assessment</h1>
-          <div style={{ marginBottom: 24, textAlign: "center", color: '#1e293b' }}>
-            <label htmlFor="assessmentType" style={{ fontWeight: 500, marginRight: 8 }}>Assessment Type:</label>
+          <h1 style={{ 
+            fontSize: "clamp(1.8rem, 4vw, 2.5rem)", 
+            fontWeight: 700, 
+            marginBottom: 12, 
+            textAlign: "center", 
+            color: "#6366f1",
+            lineHeight: 1.2 
+          }}>
+            Mental Health Assessment
+          </h1>
+          <p style={{ 
+            textAlign: "center", 
+            color: '#64748b', 
+            marginBottom: 24,
+            fontSize: "clamp(0.9rem, 2vw, 1rem)",
+            lineHeight: 1.5
+          }}>
+            Take a moment to reflect on your mental well-being
+          </p>
+          <div style={{ marginBottom: 32, textAlign: "center", color: '#1e293b' }}>
+            <label htmlFor="assessmentType" style={{ 
+              fontWeight: 600, 
+              marginRight: 12,
+              display: 'block',
+              marginBottom: 8,
+              fontSize: "clamp(0.9rem, 2vw, 1rem)"
+            }}>
+              Choose Assessment Type:
+            </label>
             <select
               id="assessmentType"
               value={assessmentType}
@@ -105,7 +131,7 @@ const AssessmentForm: React.FC = () => {
                 setCurrentQuestion(0);
                 setShowSummary(false);
               }}
-              style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #ccc", fontSize: 16 }}
+              style={assessmentStyles.selectInput as React.CSSProperties}
             >
               {ASSESSMENT_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -121,13 +147,34 @@ const AssessmentForm: React.FC = () => {
             {!showSummary ? (
               <div style={{ marginBottom: 32 }}>
                 <div style={assessmentStyles.questionCard}>
-                  <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 12, color: "#6366f1" }}>
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: "clamp(1rem, 3vw, 1.1rem)", 
+                    marginBottom: 16, 
+                    color: "#6366f1",
+                    textAlign: "center"
+                  }}>
                     Question {currentQuestion + 1} of {totalQuestions}
                   </div>
-                  <div style={{ fontWeight: 500, marginBottom: 16 }}>{questions[currentQuestion].text}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ 
+                    fontWeight: 500, 
+                    marginBottom: 24,
+                    fontSize: "clamp(0.95rem, 2.5vw, 1.05rem)",
+                    lineHeight: 1.6,
+                    color: "#334155"
+                  }}>
+                    {questions[currentQuestion].text}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {questions[currentQuestion].options.map((opt) => (
-                      <label key={opt.score} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400, cursor: "pointer", padding: "8px 0" }}>
+                      <label 
+                        key={opt.score} 
+                        style={{
+                          ...assessmentStyles.radioOption,
+                          background: answers[questions[currentQuestion].number] === opt.score ? '#f0f4ff' : 'transparent',
+                          border: answers[questions[currentQuestion].number] === opt.score ? '2px solid #6366f1' : '2px solid transparent',
+                        } as React.CSSProperties}
+                      >
                         <input
                           type="radio"
                           name={`question-${questions[currentQuestion].number}`}
@@ -135,18 +182,38 @@ const AssessmentForm: React.FC = () => {
                           checked={answers[questions[currentQuestion].number] === opt.score}
                           onChange={() => handleOptionChange(questions[currentQuestion].number, opt.score)}
                           required
-                          style={{ accentColor: "#6366f1", width: 20, height: 20 }}
+                          style={{ 
+                            accentColor: "#6366f1", 
+                            width: 20, 
+                            height: 20,
+                            marginTop: 2,
+                            flexShrink: 0
+                          }}
                         />
-                        <span style={{ fontSize: 16 }}>{opt.label}</span>
+                        <span style={{ 
+                          fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                          lineHeight: 1.4,
+                          color: "#475569"
+                        }}>
+                          {opt.label}
+                        </span>
                       </label>
                     ))}
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    marginTop: 32,
+                    gap: 16,
+                    flexWrap: "wrap"
+                  }}>
                     <button
                       type="button"
                       onClick={handlePrev}
                       disabled={currentQuestion === 0}
-                      style={currentQuestion === 0 ? { ...assessmentStyles.buttonSecondary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonSecondary}
+                      style={currentQuestion === 0 ? 
+                        { ...assessmentStyles.buttonSecondary, ...assessmentStyles.buttonDisabled } : 
+                        assessmentStyles.buttonSecondary}
                     >
                       Previous
                     </button>
@@ -154,9 +221,11 @@ const AssessmentForm: React.FC = () => {
                       type="button"
                       onClick={handleNext}
                       disabled={answers[questions[currentQuestion].number] === undefined}
-                      style={answers[questions[currentQuestion].number] === undefined ? { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonPrimary}
+                      style={answers[questions[currentQuestion].number] === undefined ? 
+                        { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : 
+                        assessmentStyles.buttonPrimary}
                     >
-                      {currentQuestion === totalQuestions - 1 ? "Review" : "Next"}
+                      {currentQuestion === totalQuestions - 1 ? "Review Answers" : "Next Question"}
                     </button>
                   </div>
                 </div>
@@ -164,43 +233,111 @@ const AssessmentForm: React.FC = () => {
             ) : (
               <div style={{ marginBottom: 32 }}>
                 <div style={assessmentStyles.reviewCard}>
-                  <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 12, color: "#6366f1" }}>Review your answers</div>
-                  <ol style={{ paddingLeft: 20, marginBottom: 16 }}>
-                    {questions.map((q) => (
-                      <li key={q.number} style={{ marginBottom: 8 }}>
-                        <span style={{ fontWeight: 500 }}>{q.text}</span>
-                        <br />
-                        <span style={{ color: "#6366f1", fontWeight: 600 }}>
-                          {q.options.find((opt) => opt.score === answers[q.number])?.label || <em>Not answered</em>}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                  <div style={{ marginBottom: 16 }}>
-                    <label htmlFor="notes" style={{ fontWeight: 500 }}>Notes (optional):</label>
-                    <br />
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: "clamp(1rem, 3vw, 1.2rem)", 
+                    marginBottom: 20, 
+                    color: "#6366f1",
+                    textAlign: "center"
+                  }}>
+                    📋 Review Your Responses
+                  </div>
+                  <p style={{
+                    color: "#64748b",
+                    marginBottom: 20,
+                    textAlign: "center",
+                    fontSize: "clamp(0.85rem, 2vw, 0.95rem)",
+                    lineHeight: 1.5
+                  }}>
+                    Please review your answers before submitting your assessment
+                  </p>
+                  <div style={{ 
+                    maxHeight: '300px', 
+                    overflowY: 'auto',
+                    marginBottom: 20,
+                    padding: '0 4px'
+                  }}>
+                    <ol style={{ paddingLeft: 20, margin: 0 }}>
+                      {questions.map((q) => (
+                        <li key={q.number} style={{ 
+                          marginBottom: 16,
+                          padding: '12px',
+                          background: '#f8fafc',
+                          borderRadius: '8px',
+                          borderLeft: '4px solid #6366f1'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            fontSize: "clamp(0.85rem, 2vw, 0.95rem)",
+                            color: "#334155"
+                          }}>
+                            {q.text}
+                          </div>
+                          <div style={{ 
+                            color: "#6366f1", 
+                            fontWeight: 600,
+                            fontSize: "clamp(0.8rem, 2vw, 0.9rem)",
+                            padding: '4px 8px',
+                            background: '#e0e7ff',
+                            borderRadius: '6px',
+                            display: 'inline-block'
+                          }}>
+                            {q.options.find((opt) => opt.score === answers[q.number])?.label || 
+                             <em style={{color: '#ef4444'}}>⚠️ Not answered</em>}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div style={{ marginBottom: 24 }}>
+                    <label htmlFor="notes" style={{ 
+                      fontWeight: 600,
+                      display: 'block',
+                      marginBottom: 8,
+                      color: "#334155",
+                      fontSize: "clamp(0.9rem, 2vw, 1rem)"
+                    }}>
+                      💭 Additional Notes (Optional)
+                    </label>
+                    <p style={{
+                      fontSize: "clamp(0.8rem, 1.8vw, 0.85rem)",
+                      color: "#64748b",
+                      marginBottom: 8,
+                      lineHeight: 1.4
+                    }}>
+                      Share any additional thoughts or context about your responses
+                    </p>
                     <textarea
                       id="notes"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                      style={{ width: "100%", borderRadius: 8, border: "1px solid #ccc", padding: 8, fontSize: 16 }}
+                      rows={4}
+                      placeholder="How are you feeling today? Any specific situations affecting your mood?"
+                      style={assessmentStyles.textareaInput as React.CSSProperties}
                     />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between",
+                    gap: 16,
+                    flexWrap: "wrap"
+                  }}>
                     <button
                       type="button"
                       onClick={() => setShowSummary(false)}
                       style={assessmentStyles.buttonSecondary}
                     >
-                      Back
+                      ← Back to Questions
                     </button>
                     <button
                       type="submit"
                       disabled={isPending}
-                      style={isPending ? { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : assessmentStyles.buttonPrimary}
+                      style={isPending ? 
+                        { ...assessmentStyles.buttonPrimary, ...assessmentStyles.buttonDisabled } : 
+                        assessmentStyles.buttonPrimary}
                     >
-                      {isPending ? "Submitting..." : "Submit"}
+                      {isPending ? "📤 Submitting..." : "✅ Submit Assessment"}
                     </button>
                   </div>
                 </div>

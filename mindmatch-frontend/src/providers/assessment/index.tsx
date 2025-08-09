@@ -22,68 +22,84 @@ import {
 export const AssessmentProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(AssessmentReducer, ASSESSMENT_INITIAL_STATE);
 
-  const getAll = async () => {
+  const handleError = (err: unknown, defaultMessage: string): string => {
+    if (typeof err === "object" && err !== null) {
+      const error = err as { 
+        response?: { 
+          data?: { 
+            error?: { message?: string };
+            message?: string;
+          } 
+        }; 
+        message?: string 
+      };
+      
+      return error?.response?.data?.error?.message || 
+             error?.response?.data?.message || 
+             error?.message || 
+             defaultMessage;
+    }
+    return defaultMessage;
+  };
+
+  const getAll = async (): Promise<void> => {
     dispatch(getAllPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Assessment/GetAll");
-      dispatch(getAllSuccess(data.result));
+      dispatch(getAllSuccess(data.result || []));
     } catch (err) {
-      let errorMsg = "Failed to fetch assessments";
-      if (typeof err === "object" && err !== null) {
-        errorMsg = (err as { response?: { data?: { error?: { message?: string } } }, message?: string })?.response?.data?.error?.message || (err as { message?: string })?.message || errorMsg;
-      }
+      const errorMsg = handleError(err, "Failed to fetch assessments");
+      console.error("Assessment getAll error:", err);
       dispatch(getAllError(errorMsg));
     }
   };
 
-  const get = async (id: number) => {
+  const get = async (id: string | number): Promise<void> => {
     dispatch(getPending());
     try {
       const { data } = await axiosInstance.get(`/api/services/app/Assessment/Get?id=${id}`);
       dispatch(getSuccess(data.result));
     } catch (err) {
-      let errorMsg = "Failed to fetch assessment";
-      if (typeof err === "object" && err !== null) {
-        errorMsg = (err as { response?: { data?: { error?: { message?: string } } }, message?: string })?.response?.data?.error?.message || (err as { message?: string })?.message || errorMsg;
-      }
+      const errorMsg = handleError(err, "Failed to fetch assessment");
+      console.error("Assessment get error:", err);
       dispatch(getError(errorMsg));
     }
   };
 
-  const create = async (payload: Partial<IAssessment>) => {
+  const create = async (payload: ICreateAssessmentRequest): Promise<void> => {
     dispatch(createPending());
     try {
       const { data } = await axiosInstance.post("/api/services/app/Assessment/Create", payload);
       dispatch(createSuccess(data.result));
     } catch (err) {
-      let errorMsg = "Failed to create assessment";
-      if (typeof err === "object" && err !== null) {
-        errorMsg = (err as { response?: { data?: { error?: { message?: string } } }, message?: string })?.response?.data?.error?.message || (err as { message?: string })?.message || errorMsg;
-      }
+      const errorMsg = handleError(err, "Failed to create assessment");
+      console.error("Assessment create error:", err);
       dispatch(createError(errorMsg));
     }
   };
 
-  const update = async (payload: Partial<IAssessment>) => {
+  const update = async (payload: Partial<IAssessment> & { id: string }): Promise<void> => {
     dispatch(updatePending());
     try {
       const { data } = await axiosInstance.put("/api/services/app/Assessment/Update", payload);
       dispatch(updateSuccess(data.result));
     } catch (err) {
-      let errorMsg = "Failed to update assessment";
-      if (typeof err === "object" && err !== null) {
-        errorMsg = (err as { response?: { data?: { error?: { message?: string } } }, message?: string })?.response?.data?.error?.message || (err as { message?: string })?.message || errorMsg;
-      }
+      const errorMsg = handleError(err, "Failed to update assessment");
+      console.error("Assessment update error:", err);
       dispatch(updateError(errorMsg));
     }
   };
 
-  const reset = () => {
+  const reset = (): void => {
     dispatch(getAllSuccess([]));
     dispatch(getAllError(""));
+    dispatch(getError(""));
+    dispatch(createError(""));
+    dispatch(updateError(""));
   };
 
   const actions = useMemo(() => ({ getAll, get, create, update, reset }), []);
+  
   return (
     <AssessmentStateContext.Provider value={state}>
       <AssessmentActionContext.Provider value={actions}>

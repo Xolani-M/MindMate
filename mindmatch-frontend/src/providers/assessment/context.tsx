@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { IAssessment } from "./types";
+import { IAssessment, ICreateAssessmentRequest } from "./types";
 
 export interface IAssessmentStateContext {
   isPending: boolean;
@@ -11,9 +11,9 @@ export interface IAssessmentStateContext {
 
 export interface IAssessmentActionContext {
   getAll: () => Promise<void>;
-  get: (id: number) => Promise<void>;
-  create: (data: Partial<IAssessment>) => Promise<void>;
-  update: (data: Partial<IAssessment>) => Promise<void>;
+  get: (id: string | number) => Promise<void>;
+  create: (data: ICreateAssessmentRequest) => Promise<void>;
+  update: (data: Partial<IAssessment> & { id: string }) => Promise<void>;
   reset: () => void;
 }
 

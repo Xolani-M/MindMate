@@ -19,66 +19,74 @@ import {
 export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(MoodReducer, MOOD_INITIAL_STATE);
 
-  const getRecent = async () => {
+  const handleError = (err: unknown, defaultMessage: string): string => {
+    if (typeof err === "object" && err !== null) {
+      const error = err as { 
+        response?: { 
+          data?: { 
+            error?: { message?: string };
+            message?: string;
+          } 
+        }; 
+        message?: string 
+      };
+      
+      return error?.response?.data?.error?.message || 
+             error?.response?.data?.message || 
+             error?.message || 
+             defaultMessage;
+    }
+    return defaultMessage;
+  };
+
+  const getRecent = async (): Promise<void> => {
     dispatch(getRecentPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Mood/GetRecent");
-      dispatch(getRecentSuccess(data.result));
+      dispatch(getRecentSuccess(data.result || []));
     } catch (err) {
-      let errorMsg = "Failed to fetch recent moods";
-      if (typeof err === "object" && err !== null) {
-        const e = err as { response?: { data?: { error?: { message?: string } } }, message?: string };
-        if (e.response?.data?.error?.message) {
-          errorMsg = e.response.data.error.message;
-        } else if (e.message) {
-          errorMsg = e.message;
-        }
-      }
+      const errorMsg = handleError(err, "Failed to fetch recent moods");
+      console.error("Mood getRecent error:", err);
       dispatch(getRecentError(errorMsg));
     }
   };
 
-  const getTrend = async () => {
+  const getTrend = async (): Promise<void> => {
     dispatch(getTrendPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Mood/GetMoodTrend");
       dispatch(getTrendSuccess(data.result));
     } catch (err) {
-      let errorMsg = "Failed to fetch mood trend";
-      if (typeof err === "object" && err !== null) {
-        const e = err as { response?: { data?: { error?: { message?: string } } }, message?: string };
-        if (e.response?.data?.error?.message) {
-          errorMsg = e.response.data.error.message;
-        } else if (e.message) {
-          errorMsg = e.message;
-        }
-      }
+      const errorMsg = handleError(err, "Failed to fetch mood trend");
+      console.error("Mood getTrend error:", err);
       dispatch(getTrendError(errorMsg));
     }
   };
 
-  const create = async (payload: Partial<IMood>) => {
+  const create = async (payload: Partial<IMood>): Promise<void> => {
+    if (!payload.level) {
+      dispatch(createError("Mood level is required"));
+      return;
+    }
+
     dispatch(createPending());
     try {
       const { data } = await axiosInstance.post("/api/services/app/Mood/Create", payload);
       dispatch(createSuccess(data.result));
+      // Refresh recent moods after creating
+      await getRecent();
     } catch (err) {
-      let errorMsg = "Failed to create mood entry";
-      if (typeof err === "object" && err !== null) {
-        const e = err as { response?: { data?: { error?: { message?: string } } }, message?: string };
-        if (e.response?.data?.error?.message) {
-          errorMsg = e.response.data.error.message;
-        } else if (e.message) {
-          errorMsg = e.message;
-        }
-      }
+      const errorMsg = handleError(err, "Failed to create mood entry");
+      console.error("Mood create error:", err);
       dispatch(createError(errorMsg));
     }
   };
 
-  const reset = () => {
+  const reset = (): void => {
     dispatch(getRecentSuccess([]));
     dispatch(getRecentError(""));
+    dispatch(getTrendError(""));
+    dispatch(createError(""));
   };
 
   const actions = useMemo(() => ({ getRecent, getTrend, create, reset }), []);
