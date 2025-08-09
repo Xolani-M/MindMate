@@ -91,13 +91,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 sessionStorage.removeItem('SeekerId');
                 sessionStorage.removeItem('role');
                 sessionStorage.removeItem('Id');
-                dispatch(sessionRestoreComplete(undefined)); // Complete with no user
+                dispatch(sessionRestoreComplete(undefined));
             }
         } else {
             console.log('🚫 No token found in storage for session restoration');
             dispatch(sessionRestoreComplete(undefined)); // Complete with no user
         }
-    }, []); // Only run once on mount - don't trigger on state changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run once on mount - intentionally empty deps to prevent re-runs on state changes
 
     // Debug effect to monitor auth state changes
     useEffect(() => {
