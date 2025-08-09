@@ -1,58 +1,177 @@
+/**
+ * @fileoverview Journal Entry Management Page Component
+ * @description Provides comprehensive journal entry interface with mood tracking, emotion selection, and authentication protection
+ * @author MINDMATE Development Team
+ * @version 1.0.0
+ */
+
 "use client";
 import React, { useEffect, useState } from "react";
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { JournalProvider, useJournalState, useJournalActions } from "@/providers/journal";
-import { ProfessionalMoodSelector, EnhancedEmotionInput } from "@/components/ProfessionalMoodSelector";
+import { MoodSelector, EnhancedEmotionInput } from "@/components/MoodSelector";
 import { EnhancedJournalFeedback, FeedbackState } from "@/components/EnhancedJournalFeedback";
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import './mood-indicators.css';
 import './journal-styles.css';
 
-function JournalContent() {
-  const { entries, isPending, isError, error, isSuccess } = useJournalState();
-  const { getEntries, create, reset } = useJournalActions();
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>(FeedbackState.NONE);
-  const [text, setText] = useState("");
-  const [moodScore, setMoodScore] = useState(5);
-  const [emotion, setEmotion] = useState("");
+//#region Type Definitions
 
-  useEffect(() => {
-    getEntries();
-  }, [getEntries]);
+/**
+ * Journal entry creation payload interface
+ * Defines the structure for creating new journal entries
+ */
+interface IJournalEntryPayload {
+    /** The text content of the journal entry */
+    entryText: string;
+    /** Mood score on a scale of 1-10 */
+    moodScore: number;
+    /** Current emotion description */
+    emotion: string;
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Show loading state
-    setFeedbackState(FeedbackState.LOADING);
-    
-    const payload = { entryText: text, moodScore, emotion };
-    await create(payload);
-    
-    // Clear form only after successful submission
-    setText("");
-    setMoodScore(5);
-    setEmotion("");
-    getEntries();
-  };
+//#endregion Type Definitions
 
-  // Handle feedback state based on API response
-  useEffect(() => {
-    if (isPending) {
-      setFeedbackState(FeedbackState.LOADING);
-    } else if (isSuccess && feedbackState === FeedbackState.LOADING) {
-      setFeedbackState(FeedbackState.SUCCESS);
-    } else if (isError && feedbackState === FeedbackState.LOADING) {
-      setFeedbackState(FeedbackState.ERROR);
+/**
+ * Journal Content Component
+ * 
+ * Provides journal entry management functionality including:
+ * - Authentication protection with session loading
+ * - Mood tracking and emotion selection
+ * - Real-time entry creation and retrieval
+ * - Professional feedback interface
+ * - Responsive design with loading states
+ * 
+ * @returns Rendered journal content component
+ */
+function JournalContent(): React.ReactElement {
+    
+    //#region Hooks
+    
+    /**
+     * Authentication guard hook for protecting journal access
+     */
+    const { isLoading: isAuthLoading } = useAuthGuard();
+    
+    /**
+     * Journal state management hooks
+     */
+    const { entries, isPending, isError, error, isSuccess } = useJournalState();
+    const { getEntries, create, reset } = useJournalActions();
+    
+    //#endregion Hooks
+    
+    //#region State Variables
+    
+    /**
+     * Current feedback display state
+     */
+    const [feedbackState, setFeedbackState] = useState<FeedbackState>(FeedbackState.NONE);
+    
+    /**
+     * Tracks the current operation type to control feedback display
+     */
+    const [isCreatingEntry, setIsCreatingEntry] = useState<boolean>(false);
+    
+    /**
+     * Journal entry text content
+     */
+    const [text, setText] = useState<string>("");
+    
+    /**
+     * Current mood score (1-10 scale)
+     */
+    const [moodScore, setMoodScore] = useState<number>(5);
+    
+    /**
+     * Current emotion description
+     */
+    const [emotion, setEmotion] = useState<string>("");
+    
+    //#endregion State Variables
+    
+    //#region Hooks Effects
+    
+    /**
+     * Load journal entries on component mount
+     * Only executes after authentication is verified
+     */
+    useEffect(() => {
+        if (!isAuthLoading) {
+            getEntries();
+        }
+    }, [getEntries, isAuthLoading]);
+
+    /**
+     * Handle feedback state based on API response
+     * Only shows feedback for journal entry creation operations, not for loading entries
+     */
+    useEffect(() => {
+        // Only show feedback if we're in the process of creating an entry
+        if (isCreatingEntry) {
+            if (isPending) {
+                setFeedbackState(FeedbackState.LOADING);
+            } else if (isSuccess) {
+                setFeedbackState(FeedbackState.SUCCESS);
+                setIsCreatingEntry(false); // Reset the creation flag
+            } else if (isError) {
+                setFeedbackState(FeedbackState.ERROR);
+                setIsCreatingEntry(false); // Reset the creation flag
+            }
+        }
+    }, [isPending, isSuccess, isError, isCreatingEntry]);
+    
+    //#endregion Hooks Effects
+    
+    // Show loading state while authentication is being verified
+    if (isAuthLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading journal...</p>
+                </div>
+            </div>
+        );
     }
-  }, [isPending, isSuccess, isError, feedbackState]);
 
-  // Handle feedback dismissal
-  const handleFeedbackDismiss = () => {
-    setFeedbackState(FeedbackState.NONE);
-    reset(); // Reset the journal provider state
-  };
+    /**
+     * Handle journal entry form submission
+     * Creates new journal entry with current mood and emotion data
+     * 
+     * @param e - Form submission event
+     */
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+        e.preventDefault();
+        
+        // Set flag to indicate we're creating an entry (for feedback control)
+        setIsCreatingEntry(true);
+        setFeedbackState(FeedbackState.LOADING);
+        
+        const payload: IJournalEntryPayload = { entryText: text, moodScore, emotion };
+        await create(payload);
+        
+        // Clear form only after successful submission
+        setText("");
+        setMoodScore(5);
+        setEmotion("");
+        getEntries();
+    };
 
-  return (
+    /**
+     * Handle feedback dismissal
+     * Resets feedback state and journal provider state
+     */
+    const handleFeedbackDismiss = (): void => {
+        setFeedbackState(FeedbackState.NONE);
+        reset(); // Reset the journal provider state
+    };
+
+    //#endregion Event Handlers
+
+    //#region Main Render
+
+    return (
     <>
       {/* CSS for button spinner */}
       <style>{`
@@ -90,7 +209,7 @@ function JournalContent() {
             />
             
             <div style={{ marginBottom: 20 }}>
-              <ProfessionalMoodSelector
+              <MoodSelector
                 value={moodScore}
                 onChange={setMoodScore}
               />
@@ -202,9 +321,19 @@ function JournalContent() {
       </div> {/* Close journal-container */}
     </>
   );
+
+  //#endregion Main Render
 }
 
-const JournalPage = () => (
+/**
+ * Journal Page Component
+ * 
+ * Root component that provides journal context and renders journal content
+ * Wraps JournalContent with JournalProvider for state management
+ * 
+ * @returns Rendered journal page with provider context
+ */
+const JournalPage = (): React.ReactElement => (
   <JournalProvider>
     <JournalContent />
   </JournalProvider>

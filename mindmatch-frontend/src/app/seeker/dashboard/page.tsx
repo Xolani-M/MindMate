@@ -1,244 +1,40 @@
+/**
+ * @fileoverview Enhanced Seeker Dashboard
+ * Modern therapeutic design with cool icon alternatives to emojis
+ * Features consistent green color scheme and welcoming interface
+ * Follows MINDMATE coding standards with proper documentation
+ */
 "use client";
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+
+import React, { useEffect } from 'react';
 import { useSeekerState, useSeekerActions } from '@/providers/seeker';
-import { useAuthState } from '@/providers/authProvider';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 import dashboardStyles from './dashboardstyles';
 import SeekerNavBar from '@/components/SeekerNavBar';
-import { ChatProvider, useChatState, useChatActions } from '@/providers/chat';
-import { chatbotModalStyles } from '../chat/chatModalStyles';
+import { ChatProvider } from '@/providers/chat';
+import ChatWidget from '@/components/ChatWidget';
+import Icons from '@/components/Icons';
+import { ModernLoadingState, ModernErrorState } from '@/components/LoadingStates';
 
-interface ChatbotModalProps {
-  readonly onClose: () => void;
-}
+// #region Icons - Now using external Icons component with Lucide icons
+// All icons are now imported from @/components/Icons for better maintainability
+// #endregion
 
-
-function ChatbotModal({ onClose }: ChatbotModalProps) {
-  const { messages, loading, error } = useChatState();
-  const { sendUserMessage } = useChatActions() as { sendUserMessage: (text: string) => Promise<void> };
-  const [input, setInput] = useState<string>('');
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { user } = useAuthState();
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!input.trim() || !user?.token) return;
-    
-    await sendUserMessage(input);
-    setInput('');
-  };
-
-  // Render modal in a portal, fixed at bottom right of viewport
-  return typeof window !== 'undefined' ? createPortal(
-    <div
-      style={{
-        ...chatbotModalStyles,
-        position: 'fixed',
-        right: 24,
-        bottom: 24,
-        left: 'unset',
-        transform: 'none',
-        width: 340,
-        minHeight: 120,
-        maxHeight: 340,
-        borderRadius: 18,
-        boxShadow: '0 8px 32px 0 rgba(99,102,241,0.16)',
-        background: 'linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        border: '1.5px solid #e0e7ff',
-        zIndex: 2001,
-      }}
-      role="dialog"
-      aria-modal="true"
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: '18px 24px',
-          borderBottom: '1.5px solid #e5e7eb',
-          background: 'linear-gradient(90deg, #6366f1 60%, #818cf8 100%)',
-          color: 'white',
-          fontWeight: 700,
-          fontSize: 18,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 60,
-          letterSpacing: 0.2,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 22, marginRight: 8 }}>💬</span>
-          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: 0.2 }}>MindMate Chatbot</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={() => router.push('/seeker/chat')}
-            style={{
-              background: 'white',
-              color: '#6366f1',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
-              fontSize: 14,
-              padding: '6px 16px',
-              cursor: 'pointer',
-              boxShadow: '0 1px 4px #e0e7ef',
-              transition: 'background 0.18s',
-            }}
-            aria-label="Open Full Chat"
-            tabIndex={0}
-            onMouseOver={e => (e.currentTarget.style.background = '#f1f5ff')}
-            onMouseOut={e => (e.currentTarget.style.background = 'white')}
-            onFocus={e => (e.currentTarget.style.background = '#f1f5ff')}
-            onBlur={e => (e.currentTarget.style.background = 'white')}
-          >
-            Open Full Chat
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              fontSize: 26,
-              cursor: 'pointer',
-              borderRadius: '50%',
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.85,
-              transition: 'background 0.18s',
-            }}
-            aria-label="Close Chatbot"
-            tabIndex={0}
-            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'none')}
-            onFocus={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-            onBlur={e => (e.currentTarget.style.background = 'none')}
-          >
-            &times;
-          </button>
-        </div>
-      </div>
-      {/* Messages */}
-      <div style={{ flex: 1, minHeight: 0, padding: '18px 18px 8px 18px', overflowY: 'auto', background: 'transparent' }}>
-        {messages && messages.length > 0 ? (
-          messages.map((msg) => (
-            <div key={msg.id} style={{ marginBottom: 14, textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
-              <span style={{
-                display: 'inline-block',
-                background: msg.sender === 'user' ? '#6366f1' : '#e0e7ff',
-                color: msg.sender === 'user' ? 'white' : '#333',
-                borderRadius: 12,
-                padding: '10px 18px',
-                maxWidth: '80%',
-                fontSize: 15.5,
-                boxShadow: msg.sender === 'user' ? '0 2px 8px rgba(99,102,241,0.10)' : 'none',
-                wordBreak: 'break-word',
-              }}>{msg.text}</span>
-            </div>
-          ))
-        ) : (
-          <div style={{ color: '#888', fontSize: 15.5, textAlign: 'center', marginTop: 32 }}>Ask me anything about your wellness journey!</div>
-        )}
-        {loading && <div style={{ color: '#6366f1', fontSize: 15.5, marginTop: 8 }}>Thinking...</div>}
-        {error && <div style={{ color: '#ef4444', fontSize: 15.5, marginTop: 8 }}>{error}</div>}
-        <div ref={messagesEndRef} />
-      </div>
-      {/* Input */}
-      <form
-        onSubmit={handleSend}
-        style={{
-          display: 'flex',
-          padding: '14px 16px',
-          borderTop: '1.5px solid #e5e7eb',
-          background: 'rgba(255,255,255,0.98)',
-          gap: 10,
-          width: '100%',
-          boxSizing: 'border-box',
-        }}
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Type your question..."
-          style={{
-            flex: 1,
-            borderRadius: 12,
-            border: '1.5px solid #c7d2fe',
-            padding: '12px 16px',
-            fontSize: 15.5,
-            outline: 'none',
-            boxShadow: '0 2px 8px rgba(99,102,241,0.05)',
-            minWidth: 0,
-            maxWidth: '100%',
-            background: '#f8fafc',
-            color: '#222',
-          }}
-          disabled={loading || !user?.token}
-          aria-label="Chat input"
-          inputMode="text"
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim() || !user?.token}
-          style={{
-            background: '#6366f1',
-            color: 'white',
-            border: 'none',
-            borderRadius: 12,
-            padding: '12px 22px',
-            fontWeight: 700,
-            fontSize: 15.5,
-            cursor: loading || !input.trim() || !user?.token ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 8px rgba(99,102,241,0.10)',
-            transition: 'background 0.2s',
-            minWidth: 70,
-          }}
-          aria-label="Send message"
-        >
-          Send
-        </button>
-      </form>
-    </div>,
-    document.body
-  ) : null;
-}
-
-
-
+// #region Main Dashboard Component
 export default function DashboardPage() {
   const { seekerDashboard, seekerDashboardPending, seekerDashboardError } = useSeekerState();
-  // Use the new getMyDashboard action (no seekerId needed)
   const { getMyDashboard } = useSeekerActions();
-  const { user } = useAuthState();
+  const { isAuthenticated, isLoading } = useAuthGuard();
   const router = useRouter();
-  const [chatOpen, setChatOpen] = useState(false);
 
-  // Debug logs
-  console.log('DashboardPage user:', user);
-  console.log('DashboardPage seekerDashboard:', seekerDashboard);
-
-  // Helper for friendly fallback
+  // Helper for friendly fallback display
   const friendly = (value: unknown, fallback = <span style={{ color: '#bbb', fontStyle: 'italic' }}>No data</span>) => {
     if (value === null || value === undefined || value === '' || value === 'N/A') return fallback;
     return value as React.ReactNode;
   };
 
+  // Extract welcome name
   let welcomeName = '';
   if (seekerDashboard) {
     const displayName = seekerDashboard.displayName;
@@ -246,194 +42,272 @@ export default function DashboardPage() {
     welcomeName = displayName || name || 'Seeker';
   }
 
+  // #region Effects
   useEffect(() => {
-    // Ensure we're on the client side
-    if (typeof window === 'undefined') return;
-    
-    const sessionToken = sessionStorage.getItem('token');
-    
-    console.log('🔍 Dashboard useEffect debug:', {
-      userFromContext: user,
-      userHasToken: !!user?.token,
-      sessionToken: sessionToken ? sessionToken.substring(0, 20) + '...' : 'none',
-      sessionRole: sessionStorage.getItem('role'),
-      sessionId: sessionStorage.getItem('Id'),
-      sessionSeekerId: sessionStorage.getItem('SeekerId')
-    });
-    
-    if (user?.token || sessionToken) {
-      console.log('✅ Found authentication, loading dashboard');
-      getMyDashboard();
-    } else {
-      console.log('❌ No authentication found, redirecting to login');
-      router.push('/auth/login');
+    if (isLoading) {
+      console.log('🔄 Auth still loading, waiting before loading dashboard...');
+      return;
     }
-  }, [user, getMyDashboard, router]);
 
-  if (seekerDashboardPending) return (
-    <div style={dashboardStyles.loading}>
-      Loading your dashboard...
-    </div>
-  );
-  if (seekerDashboardError) return (
-    <div style={dashboardStyles.error}>
-      {seekerDashboardError}
-    </div>
-  );
+    if (isAuthenticated) {
+      console.log('✅ Authenticated, loading dashboard');
+      getMyDashboard();
+    }
+  }, [isAuthenticated, isLoading, getMyDashboard]);
+  // #endregion
+
+  // #region Loading States
+  if (isLoading) {
+    return <ModernLoadingState type="dashboard" message="Loading your wellness dashboard..." />;
+  }
+
+  if (seekerDashboardPending) {
+    return <ModernLoadingState type="data" message="Preparing your wellness data..." />;
+  }
+
+  if (seekerDashboardError) {
+    return (
+      <ModernErrorState 
+        message={`Failed to load dashboard: ${seekerDashboardError}`}
+        onRetry={() => getMyDashboard()}
+      />
+    );
+  }
+
   if (!seekerDashboard) {
     return (
       <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>
         <h2>Dashboard data not available</h2>
-        <p>We couldn&rsquo;t load your dashboard data. Please check the console for debug info and try refreshing the page.</p>
-        <pre style={{ textAlign: 'left', background: '#f3f4f6', padding: 16, borderRadius: 8, margin: '16px auto', maxWidth: 600, overflowX: 'auto' }}>
-          user: {JSON.stringify(user, null, 2)}
-          {'\n'}seekerDashboard: {JSON.stringify(seekerDashboard, null, 2)}
-        </pre>
+        <p>We couldn&apos;t load your dashboard data. Please check the console for debug info and try refreshing the page.</p>
       </div>
     );
   }
+  // #endregion
 
   return (
     <ChatProvider>
       <SeekerNavBar />
-      <div style={{
-        ...dashboardStyles.container,
-        minHeight: '100vh',
-        padding: '0 0 220px 0', // Increased bottom padding to avoid chat modal overlap
-        background: 'linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%)',
-      }}>
+      <div style={dashboardStyles.container}>
+        {/* Decorative floating orbs for ambiance */}
         <div style={dashboardStyles.orbTop} />
+        <div style={dashboardStyles.orbMiddle} />
         <div style={dashboardStyles.orbBottom} />
-        <main style={{
-          ...dashboardStyles.main,
-          maxWidth: 1400,
-          margin: '0 auto',
-          padding: '96px 0 96px 0',
-        }}>
+        
+        <main style={dashboardStyles.main}>
           <div style={{
             ...dashboardStyles.card,
-            maxWidth: 1250,
-            margin: 0, // Move card to the far left
-            padding: '88px 88px 64px 88px',
-            borderRadius: 48,
-            boxShadow: '0 16px 64px rgba(99,102,241,0.14)',
-            background: 'white',
-            minHeight: 540,
-            transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)',
+            margin: '80px auto 40px auto',
           }}>
-            <h2 style={dashboardStyles.heading}>
-              Welcome, {welcomeName}!
-            </h2>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', justifyContent: 'center' }}>
+            {/* Welcome Header with Wellness Icon */}
+            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <Icons.WellnessIcon />
+              </div>
+              <h1 style={dashboardStyles.heading}>
+                Welcome Home, {welcomeName}
+              </h1>
+              <p style={dashboardStyles.subheading}>
+                Your wellness journey continues here. Take a moment to breathe, reflect, and nurture your mental health.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '24px', 
+              marginBottom: '48px', 
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}>
               <button
+                className="dashboard-button"
                 style={{
-                  padding: '12px 28px',
-                  background: '#6366f1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 20px rgba(99,102,241,0.15)',
-                  transition: 'all 0.2s',
+                  ...dashboardStyles.actionButton,
+                  ...dashboardStyles.primaryButton,
                 }}
                 onClick={() => router.push('/seeker/assessment')}
               >
-                Take Assessment
+                <Icons.BrainIcon /> Take Assessment
               </button>
               <button
+                className="dashboard-button"
                 style={{
-                  padding: '12px 28px',
-                  background: '#14b8a6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 20px rgba(20,184,166,0.15)',
-                  transition: 'all 0.2s',
+                  ...dashboardStyles.actionButton,
+                  ...dashboardStyles.secondaryButton,
                 }}
                 onClick={() => router.push('/seeker/journal')}
               >
-                Write Journal Entry
+                <Icons.JournalIcon /> Write in Journal
               </button>
             </div>
-            <div style={dashboardStyles.subheading}>
-              Here&rsquo;s a quick look at your wellness journey:
+
+            {/* Wellness Overview */}
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <h2 style={{
+                fontSize: '1.8rem',
+                fontWeight: 700,
+                color: '#374151',
+                marginBottom: '16px',
+              }}>
+                Your Wellness Dashboard <Icons.SparkleIcon />
+              </h2>
+              <p style={{
+                fontSize: '1.1rem',
+                color: '#6b7280',
+                lineHeight: 1.6,
+              }}>
+                Here&apos;s a snapshot of your mental health journey. Every step counts toward your wellbeing.
+              </p>
             </div>
+
+            {/* Stats Grid with Modern Icons */}
             <div style={{
               ...dashboardStyles.grid,
-              background: '#f3f4f6',
-              borderRadius: 16,
-              padding: 24,
-              boxShadow: '0 2px 12px rgba(99,102,241,0.07)',
-              marginTop: 16,
-              marginBottom: 8,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: 24,
-              overflowX: 'auto',
-              minWidth: 0,
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              borderRadius: 24,
+              padding: 32,
+              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.08)',
+              border: '1px solid #e2e8f0',
             }}>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Latest Mood</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.latestMood)}</span>
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  border: '2px solid #10b981',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.WellnessIcon />
+                </div>
+                <strong style={{ color: '#059669', fontSize: '1.1rem' }}>Latest Mood</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#065f46' }}>
+                  {friendly(seekerDashboard.latestMood)}
+                </span>
               </div>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Avg Mood (7d)</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.averageMoodLast7Days)}</span>
+              
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  border: '2px solid #3b82f6',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.AnalyticsIcon />
+                </div>
+                <strong style={{ color: '#1d4ed8', fontSize: '1.1rem' }}>7-Day Average</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#1e40af' }}>
+                  {friendly(seekerDashboard.averageMoodLast7Days)}
+                </span>
               </div>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Risk Level</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.riskLevel)}</span>
+              
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                  border: '2px solid #f59e0b',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.SecurityIcon />
+                </div>
+                <strong style={{ color: '#d97706', fontSize: '1.1rem' }}>Risk Level</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#92400e' }}>
+                  {friendly(seekerDashboard.riskLevel)}
+                </span>
               </div>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Latest PHQ-9</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.latestPhq9Score)}</span>
+              
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)',
+                  border: '2px solid #8b5cf6',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.BrainIcon />
+                </div>
+                <strong style={{ color: '#7c3aed', fontSize: '1.1rem' }}>PHQ-9 Score</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#6b21a8' }}>
+                  {friendly(seekerDashboard.latestPhq9Score)}
+                </span>
               </div>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Latest GAD-7</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.latestGad7Score)}</span>
+              
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #fef7ed 0%, #fed7aa 100%)',
+                  border: '2px solid #f97316',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.MindfulnessIcon />
+                </div>
+                <strong style={{ color: '#ea580c', fontSize: '1.1rem' }}>GAD-7 Score</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#c2410c' }}>
+                  {friendly(seekerDashboard.latestGad7Score)}
+                </span>
               </div>
-              <div style={{ ...dashboardStyles.gridItem, background: '#fff', borderRadius: 12, padding: 18, boxShadow: '0 1px 6px #e0e7ef' }}>
-                <strong style={{ color: '#6366f1' }}>Journal Entries</strong><br />
-                <span style={{ ...dashboardStyles.value, fontSize: 22 }}>{friendly(seekerDashboard.totalJournalEntries)}</span>
+              
+              <div 
+                className="dashboard-grid-item"
+                style={{
+                  ...dashboardStyles.gridItem,
+                  background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+                  border: '2px solid #ec4899',
+                }}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <Icons.JournalIcon />
+                </div>
+                <strong style={{ color: '#db2777', fontSize: '1.1rem' }}>Journal Entries</strong><br />
+                <span style={{ ...dashboardStyles.value, color: '#be185d' }}>
+                  {friendly(seekerDashboard.totalJournalEntries)}
+                </span>
               </div>
+            </div>
+
+            {/* Motivational Footer with Green Theme */}
+            <div style={{
+              textAlign: 'center',
+              marginTop: '48px',
+              padding: '32px',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+              borderRadius: 20,
+              border: '2px solid #10b981',
+            }}>
+              <h3 style={{
+                fontSize: '1.4rem',
+                fontWeight: 600,
+                color: '#065f46',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+              }}>
+                <Icons.SparkleIcon /> Remember: You&apos;re stronger than you think
+              </h3>
+              <p style={{
+                fontSize: '1rem',
+                color: '#047857',
+                lineHeight: 1.6,
+              }}>
+                Every small step you take toward mental wellness matters. Your journey is unique and valuable.
+              </p>
             </div>
           </div>
         </main>
       </div>
-      {typeof window !== 'undefined' && createPortal(
-        <>
-          {!chatOpen && (
-            <button
-              style={{
-                position: 'fixed',
-                bottom: 24,
-                right: 24,
-                borderRadius: '50%',
-                background: '#6366f1',
-                color: 'white',
-                width: 56,
-                height: 56,
-                boxShadow: '0 4px 20px rgba(99,102,241,0.2)',
-                fontSize: 28,
-                border: 'none',
-                cursor: 'pointer',
-                zIndex: 1000,
-              }}
-              onClick={() => setChatOpen(true)}
-              aria-label="Open Chatbot"
-            >
-              💬
-            </button>
-          )}
-          {chatOpen && <ChatbotModal onClose={() => setChatOpen(false)} />}
-        </>,
-        document.body
-      )}
+      
+      {/* Modern Chat Widget - positioned in bottom corner */}
+      <ChatWidget />
     </ChatProvider>
   );
 }
+// #endregion
