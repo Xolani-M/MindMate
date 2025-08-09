@@ -3,7 +3,7 @@ import axios from "axios";
 // Always use the production backend API regardless of environment
 const API_BASE_URL = "https://mindmate-k682.onrender.com";
 
-console.log("🔗 API Base URL:", API_BASE_URL);
+console.log("🔗 API Base URL (Updated):", API_BASE_URL);
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
