@@ -94,8 +94,12 @@
   margin-top: 20px;
 }
 
+/**
+ * Enhanced journal submit button styling
+ * Darker gradient for better visual prominence and accessibility
+ */
 .journal-submit-btn {
-  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+  background: linear-gradient(135deg, #b8941f 0%, #d4af37 50%, #b8941f 100%);
   color: white;
   border: none;
   padding: 14px 28px;
@@ -105,8 +109,8 @@
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
-    0 8px 20px rgba(212, 175, 55, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.1);
+    0 8px 20px rgba(184, 148, 31, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.12);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   position: relative;
@@ -114,10 +118,11 @@
 }
 
 .journal-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #9d7c1a 0%, #b8941f 50%, #9d7c1a 100%);
   transform: translateY(-2px);
   box-shadow: 
-    0 12px 25px rgba(212, 175, 55, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.15);
+    0 12px 25px rgba(184, 148, 31, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .journal-submit-btn:active {
@@ -128,7 +133,7 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 0 4px 8px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 8px rgba(184, 148, 31, 0.25);
 }
 
 .journal-entries-section {
