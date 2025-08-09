@@ -5,13 +5,16 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Abp.Authorization;
 using Abp.Authorization.Users;
+using Abp.Domain.Repositories;
 using Abp.MultiTenancy;
 using Abp.Runtime.Security;
 using MINDMATE.Authentication.JwtBearer;
 using MINDMATE.Authorization;
 using MINDMATE.Authorization.Users;
+using MINDMATE.Domain.Seekers;
 using MINDMATE.Models.TokenAuth;
 using MINDMATE.MultiTenancy;
 
@@ -24,17 +27,20 @@ namespace MINDMATE.Controllers
         private readonly ITenantCache _tenantCache;
         private readonly AbpLoginResultTypeHelper _abpLoginResultTypeHelper;
         private readonly TokenAuthConfiguration _configuration;
+        private readonly IRepository<Seeker, Guid> _seekerRepository;
 
         public TokenAuthController(
             LogInManager logInManager,
             ITenantCache tenantCache,
             AbpLoginResultTypeHelper abpLoginResultTypeHelper,
-            TokenAuthConfiguration configuration)
+            TokenAuthConfiguration configuration,
+            IRepository<Seeker, Guid> seekerRepository)
         {
             _logInManager = logInManager;
             _tenantCache = tenantCache;
             _abpLoginResultTypeHelper = abpLoginResultTypeHelper;
             _configuration = configuration;
+            _seekerRepository = seekerRepository;
         }
 
         [HttpPost]
@@ -46,7 +52,17 @@ namespace MINDMATE.Controllers
                 GetTenancyNameOrNull()
             );
 
-            var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity));
+            // Get the seeker ID for this user
+            var seeker = await _seekerRepository.FirstOrDefaultAsync(s => s.UserId == loginResult.User.Id);
+            var claims = CreateJwtClaims(loginResult.Identity);
+            
+            // Add seekerId claim if seeker exists
+            if (seeker != null)
+            {
+                claims.Add(new Claim("seekerId", seeker.Id.ToString()));
+            }
+
+            var accessToken = CreateAccessToken(claims);
 
             return new AuthenticateResultModel
             {
