@@ -80,6 +80,12 @@ export interface IAuthStateContext {
      * Currently authenticated user data
      */
     user?: IUser;
+    
+    /**
+     * Indicates if session restoration from storage is in progress
+     * Used to prevent premature redirects on page reload
+     */
+    isSessionLoading: boolean;
 }
 
 /**
@@ -121,6 +127,7 @@ export const INITIAL_STATE: IAuthStateContext = {
     isSuccess: false,
     isError: false,
     errorMessage: undefined,
+    isSessionLoading: true, // Start with session loading true until we check storage
 };
 
 /**

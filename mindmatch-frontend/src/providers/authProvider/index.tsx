@@ -12,7 +12,8 @@ import {
     registerSeekerError,
     loginUserPending,
     loginUserSuccess,
-    loginUserError
+    loginUserError,
+    sessionRestoreComplete
 } from "./actions";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -22,15 +23,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Initialize user state from sessionStorage on app start
     useEffect(() => {
+        // Only run on client side
+        if (typeof window === 'undefined') {
+            return;
+        }
+
         console.log('🏁 Session restoration useEffect triggered, current state:', {
             hasUser: !!state.user,
             userToken: state.user?.token ? 'present' : 'missing',
-            seekerId: state.user?.seekerId
+            seekerId: state.user?.seekerId,
+            isSessionLoading: state.isSessionLoading
         });
         
         // Check if user is already in state to avoid overwriting fresh login
         if (state.user) {
-            console.log('👤 User already in state, skipping session restoration');
+            console.log('👤 User already in state, completing session restoration');
+            dispatch(sessionRestoreComplete(state.user));
             return;
         }
         
@@ -58,6 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     sessionStorage.removeItem('SeekerId');
                     sessionStorage.removeItem('role');
                     sessionStorage.removeItem('Id');
+                    dispatch(sessionRestoreComplete(undefined)); // Complete with no user
                     return;
                 }
                 
@@ -74,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     hasExistingUser: !!state.user
                 });
                 
-                dispatch(loginUserSuccess(user));
+                dispatch(sessionRestoreComplete(user));
             } catch (error) {
                 console.error('❌ Failed to restore user session:', error);
                 // Clear invalid token
@@ -82,9 +91,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 sessionStorage.removeItem('SeekerId');
                 sessionStorage.removeItem('role');
                 sessionStorage.removeItem('Id');
+                dispatch(sessionRestoreComplete(undefined)); // Complete with no user
             }
         } else {
             console.log('🚫 No token found in storage for session restoration');
+            dispatch(sessionRestoreComplete(undefined)); // Complete with no user
         }
     }, []); // Only run once on mount - don't trigger on state changes
 

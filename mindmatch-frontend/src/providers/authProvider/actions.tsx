@@ -11,6 +11,9 @@ export enum AuthActionEnums {
     loginUserPending = "LOGIN_USER_PENDING",
     loginUserSuccess = "LOGIN_USER_SUCCESS",
     loginUserError = "LOGIN_USER_ERROR",
+    
+    // Session Management
+    sessionRestoreComplete = "SESSION_RESTORE_COMPLETE",
 }
 
 export const registerSeekerPending = createAction<IAuthStateContext>(
@@ -18,7 +21,8 @@ export const registerSeekerPending = createAction<IAuthStateContext>(
         isPending: true,
         isSuccess: false,
         isError: false,
-        errorMessage: undefined
+        errorMessage: undefined,
+        isSessionLoading: false
     })
 );
 
@@ -28,7 +32,8 @@ export const registerSeekerSuccess = createAction<IAuthStateContext, IUser>(
         isSuccess: true,
         isError: false,
         errorMessage: undefined,
-        user
+        user,
+        isSessionLoading: false
     })
 );
 
@@ -37,7 +42,8 @@ export const registerSeekerError = createAction<IAuthStateContext, string>(
         isPending: false,
         isSuccess: false,
         isError: true,
-        errorMessage
+        errorMessage,
+        isSessionLoading: false
     })
 );
 
@@ -46,7 +52,8 @@ export const loginUserPending = createAction<IAuthStateContext>(
         isPending: true,
         isSuccess: false,
         isError: false,
-        errorMessage: undefined
+        errorMessage: undefined,
+        isSessionLoading: false
     })
 );
 
@@ -56,7 +63,8 @@ export const loginUserSuccess = createAction<IAuthStateContext, IUser>(
         isSuccess: true,
         isError: false,
         errorMessage: undefined,
-        user
+        user,
+        isSessionLoading: false
     })
 );
 
@@ -65,6 +73,18 @@ export const loginUserError = createAction<IAuthStateContext, string>(
         isPending: false,
         isSuccess: false,
         isError: true,
-        errorMessage
+        errorMessage,
+        isSessionLoading: false
+    })
+);
+
+export const sessionRestoreComplete = createAction<IAuthStateContext, IUser | undefined>(
+    AuthActionEnums.sessionRestoreComplete, (user?: IUser) => ({
+        isPending: false,
+        isSuccess: false,
+        isError: false,
+        errorMessage: undefined,
+        user,
+        isSessionLoading: false
     })
 );

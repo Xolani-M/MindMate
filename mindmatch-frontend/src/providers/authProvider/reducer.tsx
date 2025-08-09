@@ -27,7 +27,12 @@ export const AuthReducer = handleActions<IAuthStateContext, IAuthStateContext>({
         ..._state,
         ..._action.payload,
     }),
+    [AuthActionEnums.sessionRestoreComplete]: (_state: IAuthStateContext, _action: Action<IAuthStateContext>) => ({
+        ..._state,
+        ..._action.payload,
+    }),
     RESET_AUTH_STATE: () => ({
-        ...INITIAL_STATE
+        ...INITIAL_STATE,
+        isSessionLoading: false // Reset should not show session loading
     })
 }, INITIAL_STATE);
