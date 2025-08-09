@@ -248,11 +248,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     console.log('useEffect user:', user);
-    if (!user?.token) {
+    
+    // Check both auth state and sessionStorage to handle page reloads
+    const sessionToken = sessionStorage.getItem('token');
+    
+    if (!user?.token && !sessionToken) {
       router.push('/auth/login');
       return;
     }
-    getMyDashboard();
+    
+    // Only fetch dashboard if we have a user or valid session
+    if (user?.token || sessionToken) {
+      getMyDashboard();
+    }
   }, [user, getMyDashboard, router]);
 
   if (seekerDashboardPending) return (

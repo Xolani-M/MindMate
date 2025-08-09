@@ -1,5 +1,5 @@
 "use client";
-import React, { useReducer, useContext, useMemo } from "react";
+import React, { useReducer, useContext, useMemo, useCallback } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { MoodStateContext, MoodActionContext, MOOD_INITIAL_STATE } from "./context";
 import { IMood } from "./types";
@@ -39,7 +39,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
     return defaultMessage;
   };
 
-  const getRecent = async (): Promise<void> => {
+  const getRecent = useCallback(async (): Promise<void> => {
     dispatch(getRecentPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Mood/GetRecent");
@@ -49,9 +49,9 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Mood getRecent error:", err);
       dispatch(getRecentError(errorMsg));
     }
-  };
+  }, []);
 
-  const getTrend = async (): Promise<void> => {
+  const getTrend = useCallback(async (): Promise<void> => {
     dispatch(getTrendPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Mood/GetMoodTrend");
@@ -61,9 +61,9 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Mood getTrend error:", err);
       dispatch(getTrendError(errorMsg));
     }
-  };
+  }, []);
 
-  const create = async (payload: Partial<IMood>): Promise<void> => {
+  const create = useCallback(async (payload: Partial<IMood>): Promise<void> => {
     if (!payload.level) {
       dispatch(createError("Mood level is required"));
       return;
@@ -80,16 +80,16 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Mood create error:", err);
       dispatch(createError(errorMsg));
     }
-  };
+  }, [getRecent]);
 
-  const reset = (): void => {
+  const reset = useCallback((): void => {
     dispatch(getRecentSuccess([]));
     dispatch(getRecentError(""));
     dispatch(getTrendError(""));
     dispatch(createError(""));
-  };
+  }, []);
 
-  const actions = useMemo(() => ({ getRecent, getTrend, create, reset }), []);
+  const actions = useMemo(() => ({ getRecent, getTrend, create, reset }), [getRecent, getTrend, create, reset]);
   return (
     <MoodStateContext.Provider value={state}>
       <MoodActionContext.Provider value={actions}>

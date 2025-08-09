@@ -20,11 +20,18 @@ export default function ProfilePage() {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   useEffect(() => {
-    if (!user?.token) {
+    // Check both auth state and sessionStorage to handle page reloads
+    const sessionToken = sessionStorage.getItem('token');
+    
+    if (!user?.token && !sessionToken) {
       router.push('/auth/login');
       return;
     }
-    getProfile();
+    
+    // Only fetch profile if we have a user or valid session
+    if (user?.token || sessionToken) {
+      getProfile();
+    }
     
     // Check server status
     const checkServerStatus = async () => {

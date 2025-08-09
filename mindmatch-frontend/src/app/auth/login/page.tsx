@@ -9,6 +9,7 @@ import loginStyles from './loginstyles';
 import { LoginError, LoginSuccess } from './LoginFeedback';
 import { useRouter } from 'next/navigation';
 import './login.module.css';
+import './auth-animations.css';
 
 const { Title, Text } = Typography;
 
@@ -49,12 +50,42 @@ export default function LoginPage() {
 
       <FloatingElement>
         <GlassCard style={loginStyles.card as React.CSSProperties}>
+          {/* MindMate Logo */}
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '30px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{
+              fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
+              background: `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 'bold',
+              textShadow: '0 2px 10px rgba(74, 144, 226, 0.3)',
+              letterSpacing: '-1px'
+            }}>
+              🧠 MindMate
+            </div>
+            <div style={{
+              fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
+              color: 'rgba(255, 255, 255, 0.8)',
+              textAlign: 'center',
+              maxWidth: '280px'
+            }}>
+              Your AI-powered mental wellness companion
+            </div>
+          </div>
+
           <div style={{ ...loginStyles.centerText as React.CSSProperties, marginBottom: '25px' }}>
             <Title level={2} style={{ ...loginStyles.title as React.CSSProperties, color: styles.colors.primary }}>
-              Sign In to MindMate
+              Welcome Back
             </Title>
             <Text style={loginStyles.subtitle as React.CSSProperties}>
-              Access your account and continue your wellness journey.
+              Continue your wellness journey with personalized support.
             </Text>
           </div>
 
@@ -88,6 +119,7 @@ export default function LoginPage() {
                 { type: 'email', message: 'Please enter a valid email address' }
               ]}
               hasFeedback
+              className="auth-form-item"
             > 
               <Input
                 prefix={<MailOutlined style={{ color: styles.colors.primary }} />}
@@ -95,10 +127,22 @@ export default function LoginPage() {
                 style={{
                   ...loginStyles.formInput as React.CSSProperties,
                   border: `2px solid ${styles.colors.healingGlow}`,
+                  borderRadius: '12px',
+                  padding: 'clamp(12px, 3vw, 16px)',
+                  fontSize: 'clamp(14px, 3.5vw, 16px)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 autoComplete="email"
                 size="large"
                 disabled={isPending}
+                onFocus={(e) => {
+                  e.target.style.borderColor = styles.colors.primary;
+                  e.target.style.boxShadow = `0 0 0 3px ${styles.colors.healingGlow}40`;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = styles.colors.healingGlow;
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </Form.Item>
 
@@ -109,6 +153,7 @@ export default function LoginPage() {
                 { min: 6, message: 'Password must be at least 6 characters' }
               ]}
               hasFeedback
+              className="auth-form-item"
             > 
               <Input.Password
                 prefix={<LockOutlined style={{ color: styles.colors.primary }} />}
@@ -117,12 +162,24 @@ export default function LoginPage() {
                 style={{
                   ...loginStyles.formInput as React.CSSProperties,
                   border: `2px solid ${styles.colors.healingGlow}`,
+                  borderRadius: '12px',
+                  padding: 'clamp(12px, 3vw, 16px)',
+                  fontSize: 'clamp(14px, 3.5vw, 16px)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 value={passwordValue}
                 onChange={e => setPasswordValue(e.target.value)}
                 autoComplete="current-password"
                 size="large"
                 disabled={isPending}
+                onFocus={(e) => {
+                  e.target.style.borderColor = styles.colors.primary;
+                  e.target.style.boxShadow = `0 0 0 3px ${styles.colors.healingGlow}40`;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = styles.colors.healingGlow;
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </Form.Item>
             <Form.Item style={{ marginBottom: '16px' }}>
@@ -146,10 +203,35 @@ export default function LoginPage() {
               <GlowButton 
                 htmlType="submit" 
                 loading={isPending} 
-                style={{ width: '100%', marginBottom: '15px' }}
+                className="auth-button"
+                style={{ 
+                  width: '100%', 
+                  marginBottom: '15px',
+                  height: 'clamp(48px, 12vw, 56px)',
+                  fontSize: 'clamp(14px, 3.5vw, 16px)',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  background: isPending 
+                    ? `linear-gradient(135deg, ${styles.colors.healingGlow}, ${styles.colors.primary})` 
+                    : `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+                  border: 'none',
+                  boxShadow: isPending 
+                    ? '0 4px 15px rgba(74, 144, 226, 0.2)' 
+                    : '0 6px 20px rgba(74, 144, 226, 0.4)',
+                }}
                 disabled={isPending}
               >
-                {isPending ? 'Signing you in...' : 'Continue Your Journey'}
+                {isPending ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="loading-pulse" style={{ fontSize: '16px' }}>🔐</span>
+                    <span>Signing you in...</span>
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '16px' }}>🚀</span>
+                    <span>Continue Your Journey</span>
+                  </span>
+                )}
               </GlowButton>
             </Form.Item>
 

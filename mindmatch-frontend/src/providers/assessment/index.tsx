@@ -1,5 +1,5 @@
 "use client";
-import React, { useReducer, useContext, useMemo } from "react";
+import React, { useReducer, useContext, useMemo, useCallback } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { AssessmentStateContext, AssessmentActionContext, ASSESSMENT_INITIAL_STATE } from "./context";
 import { IAssessment, ICreateAssessmentRequest } from "./types";
@@ -42,7 +42,7 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
     return defaultMessage;
   };
 
-  const getAll = async (): Promise<void> => {
+  const getAll = useCallback(async (): Promise<void> => {
     dispatch(getAllPending());
     try {
       const { data } = await axiosInstance.get("/api/services/app/Assessment/GetAll");
@@ -52,9 +52,9 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
       console.error("Assessment getAll error:", err);
       dispatch(getAllError(errorMsg));
     }
-  };
+  }, []);
 
-  const get = async (id: string | number): Promise<void> => {
+  const get = useCallback(async (id: string | number): Promise<void> => {
     dispatch(getPending());
     try {
       const { data } = await axiosInstance.get(`/api/services/app/Assessment/Get?id=${id}`);
@@ -64,9 +64,9 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
       console.error("Assessment get error:", err);
       dispatch(getError(errorMsg));
     }
-  };
+  }, []);
 
-  const create = async (payload: ICreateAssessmentRequest): Promise<void> => {
+  const create = useCallback(async (payload: ICreateAssessmentRequest): Promise<void> => {
     dispatch(createPending());
     try {
       const { data } = await axiosInstance.post("/api/services/app/Assessment/Create", payload);
@@ -76,9 +76,9 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
       console.error("Assessment create error:", err);
       dispatch(createError(errorMsg));
     }
-  };
+  }, []);
 
-  const update = async (payload: Partial<IAssessment> & { id: string }): Promise<void> => {
+  const update = useCallback(async (payload: Partial<IAssessment> & { id: string }): Promise<void> => {
     dispatch(updatePending());
     try {
       const { data } = await axiosInstance.put("/api/services/app/Assessment/Update", payload);
@@ -88,17 +88,17 @@ export const AssessmentProvider = ({ children }: { children: React.ReactNode }) 
       console.error("Assessment update error:", err);
       dispatch(updateError(errorMsg));
     }
-  };
+  }, []);
 
-  const reset = (): void => {
+  const reset = useCallback((): void => {
     dispatch(getAllSuccess([]));
     dispatch(getAllError(""));
     dispatch(getError(""));
     dispatch(createError(""));
     dispatch(updateError(""));
-  };
+  }, []);
 
-  const actions = useMemo(() => ({ getAll, get, create, update, reset }), []);
+  const actions = useMemo(() => ({ getAll, get, create, update, reset }), [getAll, get, create, update, reset]);
   
   return (
     <AssessmentStateContext.Provider value={state}>

@@ -25,7 +25,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await axiosInstance.post(
           "/api/services/app/Chat/GetChatbotReply",
-          { message: text }
+          { Message: text }
         );
 
       const botMsg: IChatMessage = {
@@ -45,7 +45,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       const isAxiosError = (error: unknown): error is { 
         response: { 
           status: number; 
-          data?: { error?: { message?: string } } 
+          data?: { error?: { message?: string }; success?: boolean } 
         } 
       } => {
         return typeof error === 'object' && error !== null && 'response' in error;
@@ -53,12 +53,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (isAxiosError(err)) {
         if (err.response.status === 500) {
-          errorMessage = "The chatbot service is temporarily unavailable. Please try again later.";
+          // Check if it's an ABP framework error
+          if (err.response.data?.success === false && err.response.data?.error?.message) {
+            errorMessage = `Chatbot service error: ${err.response.data.error.message}`;
+          } else {
+            errorMessage = "The chatbot service is temporarily unavailable. Please try again later.";
+          }
         } else if (err.response.status === 401) {
           errorMessage = "Please log in again to use the chatbot.";
+        } else if (err.response.status === 400) {
+          errorMessage = "Invalid message format. Please try a different message.";
         } else if (err.response.data?.error?.message) {
           errorMessage = err.response.data.error.message;
         }
+        console.error('Response status:', err.response.status);
         console.error('Response data:', err.response.data);
       } else if (err instanceof Error) {
         errorMessage = `Network error: ${err.message}`;

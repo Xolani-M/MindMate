@@ -24,17 +24,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const token = sessionStorage.getItem('token');
         const seekerId = sessionStorage.getItem('SeekerId');
+        const role = sessionStorage.getItem('role');
+        const userId = sessionStorage.getItem('Id');
         
         if (token) {
             try {
                 const decoded = decodeToken(token);
                 const decodedSeekerId = decoded['seekerId'] || seekerId;
+                const decodedRole = decoded[AbpTokenProperies.role] || role;
+                const decodedUserId = decoded[AbpTokenProperies.nameidentifier] || userId;
+                
+                // Check if token is still valid (not expired)
+                const currentTime = Math.floor(Date.now() / 1000);
+                const tokenExp = typeof decoded.exp === 'number' ? decoded.exp : parseInt(decoded.exp || '0');
+                
+                if (tokenExp && currentTime >= tokenExp) {
+                    // Token is expired, clear session
+                    console.log('Token expired, clearing session');
+                    sessionStorage.removeItem('token');
+                    sessionStorage.removeItem('SeekerId');
+                    sessionStorage.removeItem('role');
+                    sessionStorage.removeItem('Id');
+                    return;
+                }
                 
                 // Initialize user state with existing session data
                 const user: IUser = {
                     token,
                     seekerId: decodedSeekerId || undefined,
                 };
+                
+                console.log('Restoring user session:', { 
+                    hasToken: !!token, 
+                    seekerId: decodedSeekerId, 
+                    role: decodedRole,
+                    userId: decodedUserId 
+                });
                 
                 dispatch(loginUserSuccess(user));
             } catch (error) {
@@ -178,7 +203,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [dispatch, router, instance]);
 
-    const actions = useMemo(() => ({ registerSeeker, loginUser, resetAuthState }), [registerSeeker, loginUser, resetAuthState]);
+    // Logout User
+    const logoutUser = useCallback(() => {
+        // Clear all session storage
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('SeekerId');
+        sessionStorage.removeItem('role');
+        sessionStorage.removeItem('Id');
+        
+        // Reset auth state
+        dispatch({ type: 'RESET_AUTH_STATE', payload: INITIAL_STATE });
+        
+        // Redirect to login
+        router.push('/auth/login');
+    }, [dispatch, router]);
+
+    const actions = useMemo(() => ({ 
+        registerSeeker, 
+        loginUser, 
+        logoutUser, 
+        resetAuthState 
+    }), [registerSeeker, loginUser, logoutUser, resetAuthState]);
     return (
         <AuthStateContext.Provider value={state}>
             <AuthActionContext.Provider value={actions}>

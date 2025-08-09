@@ -16,11 +16,18 @@ export default function MoodPage() {
   const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
-    if (!user?.token) {
+    // Check both auth state and sessionStorage to handle page reloads
+    const sessionToken = sessionStorage.getItem('token');
+    
+    if (!user?.token && !sessionToken) {
       router.push('/auth/login');
       return;
     }
-    getRecent();
+    
+    // Only fetch data if we have a user or valid session
+    if (user?.token || sessionToken) {
+      getRecent();
+    }
   }, [user, getRecent, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

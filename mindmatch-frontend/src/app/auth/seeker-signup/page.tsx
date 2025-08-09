@@ -6,7 +6,9 @@ import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { FloatingElement, GlassCard, GlowButton, PasswordStrength } from '@/components/MindMateComponents';
 import { styles } from '@/components/styles';
 import signupStyles from './signupstyles';
+import { SignupError, SignupSuccess } from './SignupFeedback';
 import { useRouter } from 'next/navigation';
+import '../login/auth-animations.css';
 
 interface SignupFormValues {
   name: string;
@@ -27,7 +29,7 @@ const SignupPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [passwordFocused, setPasswordFocused] = useState(false);
   const { registerSeeker, resetAuthState } = useAuthActions();
-  const { isPending, isError, isSuccess } = useAuthState();
+  const { isPending, isError, isSuccess, errorMessage } = useAuthState();
   const router = useRouter();
 
   React.useEffect(() => {
@@ -55,15 +57,50 @@ const SignupPage: React.FC = () => {
 
       <FloatingElement>
         <GlassCard style={signupStyles.card as React.CSSProperties}>
+          {/* MindMate Logo */}
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '30px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{
+              fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
+              background: `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 'bold',
+              textShadow: '0 2px 10px rgba(74, 144, 226, 0.3)',
+              letterSpacing: '-1px'
+            }}>
+              🧠 MindMate
+            </div>
+            <div style={{
+              fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
+              color: 'rgba(255, 255, 255, 0.8)',
+              textAlign: 'center',
+              maxWidth: '280px'
+            }}>
+              Your AI-powered mental wellness companion
+            </div>
+          </div>
+
           <div style={{ ...signupStyles.centerText as React.CSSProperties, marginBottom: '25px' }}>
             <Title level={2} style={{ ...signupStyles.title as React.CSSProperties, color: styles.colors.primary }}>
               Begin Your Journey
             </Title>
             <Text style={signupStyles.subtitle as React.CSSProperties}>
-              Join our community of seekers!
+              Join thousands discovering their path to wellness
             </Text>
           </div>
 
+          {/* Enhanced Error Display */}
+          <SignupError error={isError ? errorMessage : undefined} />
+
+          {/* Success Message */}
+          <SignupSuccess visible={isSuccess} />
 
           <Form
             form={form}
@@ -165,14 +202,40 @@ const SignupPage: React.FC = () => {
               </Checkbox>
             </Form.Item>
             <Form.Item>
-              <GlowButton htmlType="submit" loading={isPending} style={{ width: '100%', marginBottom: '15px' }}>Start Your Wellness Journey</GlowButton>
+              <GlowButton 
+                htmlType="submit" 
+                loading={isPending} 
+                className="auth-button"
+                style={{ 
+                  width: '100%', 
+                  marginBottom: '15px',
+                  height: 'clamp(48px, 12vw, 56px)',
+                  fontSize: 'clamp(14px, 3.5vw, 16px)',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  background: isPending 
+                    ? `linear-gradient(135deg, ${styles.colors.healingGlow}, ${styles.colors.primary})` 
+                    : `linear-gradient(135deg, ${styles.colors.primary}, ${styles.colors.healingGlow})`,
+                  border: 'none',
+                  boxShadow: isPending 
+                    ? '0 4px 15px rgba(74, 144, 226, 0.2)' 
+                    : '0 6px 20px rgba(74, 144, 226, 0.4)',
+                }}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="loading-pulse" style={{ fontSize: '16px' }}>🚀</span>
+                    <span>Creating your account...</span>
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '16px' }}>🌟</span>
+                    <span>Start Your Wellness Journey</span>
+                  </span>
+                )}
+              </GlowButton>
             </Form.Item>
-            {isError && (
-              <div style={{ color: 'red', marginBottom: '10px' }}>Signup failed. Please try again.</div>
-            )}
-            {isSuccess && (
-              <div style={{ color: 'green', marginBottom: '10px' }}>Signup successful! Redirecting...</div>
-            )}
           </Form>
 
           <Divider style={signupStyles.divider as React.CSSProperties}>or</Divider>

@@ -1,31 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'antd';
 
-interface LoginErrorProps {
+interface SignupErrorProps {
   error?: string;
   onClose?: () => void;
 }
 
-export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
+export const SignupError: React.FC<SignupErrorProps> = ({ error, onClose }) => {
   if (!error) return null;
 
-  // Parse error types for better UX
   const getErrorConfig = (errorMessage: string) => {
-    if (errorMessage.includes('Invalid email or password')) {
+    if (errorMessage.includes('already exists') || errorMessage.includes('duplicate')) {
+      return {
+        type: 'warning' as const,
+        icon: '👤',
+        title: 'Account Already Exists',
+        description: 'An account with this email already exists. Try logging in instead.',
+        showIcon: true,
+      };
+    }
+    
+    if (errorMessage.includes('email') && errorMessage.includes('invalid')) {
       return {
         type: 'error' as const,
-        icon: '🔐',
-        title: 'Authentication Failed',
+        icon: '📧',
+        title: 'Invalid Email',
         description: errorMessage,
         showIcon: true,
       };
     }
     
-    if (errorMessage.includes('verify your email')) {
+    if (errorMessage.includes('password')) {
       return {
-        type: 'warning' as const,
-        icon: '📧',
-        title: 'Email Verification Required',
+        type: 'error' as const,
+        icon: '🔒',
+        title: 'Password Issue',
         description: errorMessage,
         showIcon: true,
       };
@@ -36,17 +45,7 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
         type: 'error' as const,
         icon: '🌐',
         title: 'Connection Problem',
-        description: errorMessage,
-        showIcon: true,
-      };
-    }
-    
-    if (errorMessage.includes('locked')) {
-      return {
-        type: 'warning' as const,
-        icon: '🔒',
-        title: 'Account Locked',
-        description: errorMessage,
+        description: 'Unable to create account. Please check your connection and try again.',
         showIcon: true,
       };
     }
@@ -54,7 +53,7 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
     return {
       type: 'error' as const,
       icon: '⚠️',
-      title: 'Login Failed',
+      title: 'Registration Failed',
       description: errorMessage,
       showIcon: true,
     };
@@ -63,9 +62,7 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
   const config = getErrorConfig(error);
 
   return (
-    <div className="slide-in" style={{ 
-      marginBottom: '16px'
-    }}>
+    <div className="slide-in" style={{ marginBottom: '16px' }}>
       <Alert
         {...config}
         closable={!!onClose}
@@ -89,29 +86,27 @@ export const LoginError: React.FC<LoginErrorProps> = ({ error, onClose }) => {
   );
 };
 
-interface LoginSuccessProps {
+interface SignupSuccessProps {
   visible: boolean;
 }
 
-export const LoginSuccess: React.FC<LoginSuccessProps> = ({ visible }) => {
+export const SignupSuccess: React.FC<SignupSuccessProps> = ({ visible }) => {
   const [dots, setDots] = useState('');
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!visible) return;
 
-    // Animated dots
     const dotInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
 
-    // Progress simulation
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        const newProgress = prev + 10;
+        const newProgress = prev + 8;
         return newProgress > 100 ? 100 : newProgress;
       });
-    }, 100);
+    }, 150);
 
     return () => {
       clearInterval(dotInterval);
@@ -122,24 +117,20 @@ export const LoginSuccess: React.FC<LoginSuccessProps> = ({ visible }) => {
   if (!visible) return null;
 
   return (
-    <div className="success-slide-in" style={{ 
-      marginBottom: '16px'
-    }}>
+    <div className="success-slide-in" style={{ marginBottom: '16px' }}>
       <Alert
         type="success"
         showIcon
         message={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="loading-pulse" style={{ 
-              fontSize: '16px'
-            }}>✅</span>
-            <strong>Welcome Back!</strong>
+            <span className="loading-pulse" style={{ fontSize: '16px' }}>🎉</span>
+            <strong>Welcome to MindMate!</strong>
           </div>
         }
         description={
           <div>
             <div style={{ marginBottom: '8px' }}>
-              Taking you to your dashboard{dots}
+              Account created successfully! Redirecting to login{dots}
             </div>
             <div style={{
               width: '100%',
@@ -153,7 +144,7 @@ export const LoginSuccess: React.FC<LoginSuccessProps> = ({ visible }) => {
                 height: '100%',
                 backgroundColor: '#34d399',
                 borderRadius: '2px',
-                transition: 'width 0.1s ease-out'
+                transition: 'width 0.15s ease-out'
               }} />
             </div>
           </div>
