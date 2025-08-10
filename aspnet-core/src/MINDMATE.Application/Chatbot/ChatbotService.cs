@@ -40,19 +40,16 @@ public class ChatbotService : ITransientDependency
                 _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
                             Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? 
                             configuration["Gemini:ApiKey"];
-                _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
+                _geminiEndpoint = configuration["Gemini:ApiEndpoint"] ?? "https://generativelanguage.googleapis.com/";
 
                 // Log configuration status (remove in production)
                 System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {_geminiEndpoint ?? "NULL"}");
 
                 if (string.IsNullOrWhiteSpace(_geminiKey))
                     throw new InvalidOperationException("Gemini API key is not configured. Please set Gemini:ApiKey in configuration or GEMINI_API_KEY environment variable.");
-                
-                if (string.IsNullOrWhiteSpace(_geminiEndpoint))
-                    throw new InvalidOperationException("Gemini API endpoint is not configured. Please set Gemini:ApiEndpoint in configuration.");
 
                 _httpClient = new HttpClient();
-                _httpClient.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+                _httpClient.BaseAddress = new Uri(_geminiEndpoint);
                 _httpClient.DefaultRequestHeaders.Accept.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
