@@ -1,6 +1,13 @@
 
 /**
- * @fileoverview Chat Provider for MindMate chatbot functionality
+ "use client";
+import React, { useReducer, useContext, useMemo, useCallback, useEffect } from "react";
+import { axiosInstance } from "@/utils/axiosInstance";
+import { v4 as uuidv4 } from "uuid";
+import { IChatMessage } from "./types";
+import { ChatStateContext, ChatActionContext } from "./context";
+import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
+import { chatReducer, initialChatState } from "./reducer";verview Chat Provider for MindMate chatbot functionality
  * @description Manages chat state and handles communication with the chatbot API
  * @author MindMate Development Team
  * @version 1.0.0
@@ -12,7 +19,7 @@ import { axiosInstance } from "@/utils/axiosInstance";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
 import { ChatStateContext, ChatActionContext } from "./context";
-import { sendMessage, receiveMessage, setLoading, setError, clearHistory as clearHistoryAction } from "./actions";
+import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
 import { chatReducer, initialChatState } from "./reducer";
 
 //#region Type Definitions
@@ -43,7 +50,28 @@ interface IAxiosError {
 const CHAT_STORAGE_KEY = 'mindmate_chat_history';
 
 /**
- * Loads chat history from localStorage
+ * Gets user-specific storage key
+ */
+const getUserChatStorageKey = (): string => {
+  if (typeof window === 'undefined') return CHAT_STORAGE_KEY;
+  
+  // Try to get user identifier from sessionStorage (where auth token is stored)
+  const authData = sessionStorage.getItem('authToken');
+  if (authData) {
+    try {
+      // Create a simple hash of the token for user identification (without exposing the actual token)
+      const userHash = btoa(authData).slice(0, 8);
+      return `${CHAT_STORAGE_KEY}_${userHash}`;
+    } catch {
+      // Fallback to default key if hashing fails
+    }
+  }
+  
+  return CHAT_STORAGE_KEY;
+};
+
+/**
+ * Loads chat history from localStorage for current user
  * 
  * @returns Saved chat messages or empty array
  */
@@ -51,7 +79,8 @@ const loadChatHistory = (): IChatMessage[] => {
   if (typeof window === 'undefined') return [];
   
   try {
-    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    const storageKey = getUserChatStorageKey();
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       const parsed = JSON.parse(saved);
       // Validate the data structure
@@ -69,7 +98,7 @@ const loadChatHistory = (): IChatMessage[] => {
 };
 
 /**
- * Saves chat history to localStorage
+ * Saves chat history to localStorage for current user
  * 
  * @param messages - Chat messages to save
  */
@@ -77,9 +106,28 @@ const saveChatHistory = (messages: IChatMessage[]): void => {
   if (typeof window === 'undefined') return;
   
   try {
-    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    const storageKey = getUserChatStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(messages));
   } catch (error) {
     console.warn('Failed to save chat history:', error);
+  }
+};
+
+/**
+ * Clears all chat history for all users (useful for logout)
+ */
+const clearAllChatHistory = (): void => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // Clear current user's chat
+    const currentKey = getUserChatStorageKey();
+    localStorage.removeItem(currentKey);
+    
+    // Also clear the default key for backwards compatibility
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear chat history:', error);
   }
 };
 
@@ -146,6 +194,46 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     ...initialChatState,
     messages: loadChatHistory()
   });
+
+  // Track current user for auth changes
+  const [currentUserToken, setCurrentUserToken] = React.useState<string | null>(null);
+
+  // Initialize user token on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUserToken(sessionStorage.getItem('token'));
+    }
+  }, []);
+
+  // Monitor auth changes and clear chat on logout
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkAuthChanges = () => {
+      const token = sessionStorage.getItem('token');
+      
+      // If user was logged in but now has no token (logged out)
+      if (currentUserToken && !token) {
+        console.log('🧹 User logged out, clearing chat history');
+        dispatch({ type: 'CLEAR_HISTORY' });
+        clearAllChatHistory();
+      }
+      
+      // Update current token reference
+      setCurrentUserToken(token);
+    };
+
+    // Check auth changes periodically
+    const interval = setInterval(checkAuthChanges, 1000);
+    
+    // Also check on storage events (for multi-tab logout)
+    window.addEventListener('storage', checkAuthChanges);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkAuthChanges);
+    };
+  }, [currentUserToken]);
 
   // Save chat history whenever messages change
   React.useEffect(() => {
@@ -230,9 +318,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const clearHistory = useCallback((): void => {
     dispatch({ type: 'CLEAR_HISTORY' });
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(CHAT_STORAGE_KEY);
-    }
+    clearAllChatHistory();
   }, []);
 
   //#endregion Event Handlers
