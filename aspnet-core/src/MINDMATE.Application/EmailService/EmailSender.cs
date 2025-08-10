@@ -84,4 +84,3 @@ namespace MINDMATE.Application.EmailService
         }
     }
 }
-}
