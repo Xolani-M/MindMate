@@ -28,4 +28,19 @@ export const SeekerReducer = handleActions<ISeekerStateContext, ISeekerStateCont
     seekerDashboardPending: false,
     seekerDashboardError: (action.payload as unknown) as string,
   }),
+  
+  // Real-Time Analytics Reducers
+  [SeekerActionEnums.getRealTimeAnalyticsPending]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getRealTimeAnalyticsSuccess]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getRealTimeAnalyticsError]: (state, action) => ({ ...state, ...action.payload }),
+  
+  // Therapeutic Goals Reducers
+  [SeekerActionEnums.getTherapeuticGoalsPending]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getTherapeuticGoalsSuccess]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getTherapeuticGoalsError]: (state, action) => ({ ...state, ...action.payload }),
+  
+  // Crisis Prevention Reducers
+  [SeekerActionEnums.getCrisisPreventionPending]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getCrisisPreventionSuccess]: (state, action) => ({ ...state, ...action.payload }),
+  [SeekerActionEnums.getCrisisPreventionError]: (state, action) => ({ ...state, ...action.payload }),
 }, SEEKER_INITIAL_STATE);

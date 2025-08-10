@@ -126,6 +126,22 @@ export default function SeekerNavBar() {
         </button>
         <button 
           style={navButtonStyles} 
+          onClick={() => router.push('/seeker/analytics')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          }}
+        >
+          Analytics
+        </button>
+        <button 
+          style={navButtonStyles} 
           onClick={() => router.push('/seeker/chat')}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';

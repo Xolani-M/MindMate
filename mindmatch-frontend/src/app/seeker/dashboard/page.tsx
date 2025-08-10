@@ -139,6 +139,18 @@ export default function DashboardPage() {
               >
                 <Icons.JournalIcon /> Write in Journal
               </button>
+              <button
+                className="dashboard-button"
+                style={{
+                  ...dashboardStyles.actionButton,
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                  color: 'white',
+                  border: '2px solid #3b82f6',
+                }}
+                onClick={() => router.push('/seeker/analytics')}
+              >
+                <Icons.AnalyticsIcon /> View Analytics
+              </button>
             </div>
 
             {/* Wellness Overview */}

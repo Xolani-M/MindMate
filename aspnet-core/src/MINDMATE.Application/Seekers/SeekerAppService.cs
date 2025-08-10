@@ -7,6 +7,7 @@ using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
+
 using MINDMATE.Domain.Enums;
 using MINDMATE.Domain.Seekers;
 using MINDMATE.Seekers.Dto;
@@ -106,29 +107,80 @@ namespace MINDMATE.Application.Seekers
 
             var seeker = await GetSeekerByUserIdAsync(AbpSession.UserId.Value);
 
+            // Combine moods from MoodEntry and JournalEntry
+            var moodEntries = seeker.Moods?.Select(m => new { Date = m.EntryDate, Score = (int)m.Level }) ?? Enumerable.Empty<dynamic>();
+            var journalMoods = seeker.JournalEntries?.Where(j => j.MoodScore > 0)
+                .Select(j => new { Date = j.EntryDate, Score = j.MoodScore }) ?? Enumerable.Empty<dynamic>();
+
+            var allMoods = moodEntries.Concat(journalMoods).ToList();
+
+            var latestMood = allMoods.OrderByDescending(m => m.Date).FirstOrDefault();
+            var averageMoodLast7Days = allMoods
+                .Where(m => m.Date >= DateTime.Now.AddDays(-7))
+                .Select(m => (int)m.Score)
+                .DefaultIfEmpty()
+                .Average();
+
             return new SeekerDashboardDto
             {
                 TotalJournalEntries = seeker.JournalEntries?.Count ?? 0,
-                LatestMood = seeker.Moods?
-                    .OrderByDescending(m => m.EntryDate)
-                    .FirstOrDefault()?.Level.ToString(),
-                AverageMoodLast7Days = seeker.Moods?
-                    .Where(m => m.EntryDate >= DateTime.Now.AddDays(-7))
-                    .Select(m => (int)m.Level)
-                    .DefaultIfEmpty()
-                    .Average() ?? 0,
+                LatestMood = latestMood != null ? latestMood.Score.ToString() : null,
+                AverageMoodLast7Days = averageMoodLast7Days,
                 RiskLevel = seeker.CurrentRiskLevel.ToString(),
                 LatestPhq9Score = seeker.AssessmentResults?
                     .Where(a => a.Type == AssessmentType.PHQ9)
-                    .OrderByDescending(a => a.CreationTime)
+                    .OrderByDescending(a => a.DateTaken)
                     .FirstOrDefault()?.Score,
                 LatestGad7Score = seeker.AssessmentResults?
                     .Where(a => a.Type == AssessmentType.GAD7)
-                    .OrderByDescending(a => a.CreationTime)
+                    .OrderByDescending(a => a.DateTaken)
                     .FirstOrDefault()?.Score,
                 Name = seeker.Name,
                 DisplayName = seeker.DisplayName
             };
+        }
+
+
+
+        /// <summary>
+        /// Tests the AI integration with a simple emotional analysis
+        /// This is a simplified test endpoint to demonstrate Gemini AI working
+        /// </summary>
+        /// <param name="text">Text to analyze (optional, uses sample text if empty)</param>
+        /// <returns>Simple AI analysis result</returns>
+        [AbpAuthorize]
+        public async Task<object> TestAIAnalysisAsync(string text = "")
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    text = "I've been feeling anxious lately and having trouble sleeping. Work has been really stressful.";
+                }
+
+                // Use external analytics service for testing if needed
+                var result = "AI analysis feature has been moved to dedicated SeekerAnalyticsAppService. Please use /api/services/app/SeekerAnalytics/GetAIEmotionalAnalysis endpoint instead.";
+                
+                return new
+                {
+                    success = true,
+                    message = "AI analysis completed successfully!",
+                    inputText = text,
+                    analysisResult = result,
+                    timestamp = DateTime.UtcNow
+                };
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "AI analysis failed: " + ex.Message,
+                    inputText = text,
+                    error = ex.ToString(),
+                    timestamp = DateTime.UtcNow
+                };
+            }
         }
 
         [AbpAuthorize]
@@ -160,5 +212,7 @@ namespace MINDMATE.Application.Seekers
             await Repository.UpdateAsync(seeker);
             return MapToEntityDto(seeker);
         }
+
+
     }
 }

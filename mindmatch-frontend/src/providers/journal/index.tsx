@@ -122,3 +122,6 @@ export const useJournalActions = () => {
   }
   return context;
 };
+
+// Export types
+export type { IJournalEntry } from './types';

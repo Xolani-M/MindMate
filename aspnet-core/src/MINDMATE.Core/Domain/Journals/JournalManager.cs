@@ -33,6 +33,9 @@ namespace MINDMATE.Domain.Journals
                 EntryDate = Clock.Now
             };
 
+            // Auto-derive emotional state based on emotion string and mood score
+            entry.DeriveEmotionalState();
+
             await _journalRepository.InsertAsync(entry);
             return entry;
         }
@@ -43,6 +46,10 @@ namespace MINDMATE.Domain.Journals
             entry.MoodScore = newMoodScore;
             entry.Emotion = newEmotion;
             entry.LastModificationTime = Clock.Now;
+            
+            // Auto-derive emotional state based on updated emotion string and mood score
+            entry.DeriveEmotionalState();
+            
             await _journalRepository.UpdateAsync(entry);
             return entry;
         }

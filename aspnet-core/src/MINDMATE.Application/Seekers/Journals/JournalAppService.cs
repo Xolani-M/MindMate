@@ -10,6 +10,7 @@ using MINDMATE.Application.Seekers.Journals.Dto;
 using MINDMATE.Domain.Journals;
 using MINDMATE.Domain.Seekers;
 using MINDMATE.Seekers.Journals.Dto;
+using MINDMATE.Application.Chatbot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,20 +59,50 @@ namespace MINDMATE.Application.Seekers.Journals
         }
 
         /// <summary>
-        /// Creates a new journal entry for the current user.
+        /// Creates a new journal entry for the current user with automatic emotional state detection.
         /// </summary>
         public async Task<JournalEntryDto> CreateAsync(CreateJournalEntryDto input)
         {
             var seekerId = await GetCurrentSeekerIdAsync();
             
+            // Perform emotional state analysis on the journal entry
+            var emotionalAnalysis = EmotionalStateDetectionService.AnalyzeEmotionalState(input.EntryText);
+            
+            // Enhance the emotion field with detected emotions if not provided or supplement existing
+            var enhancedEmotion = input.Emotion;
+            if (string.IsNullOrWhiteSpace(enhancedEmotion))
+            {
+                // Auto-detect primary emotion
+                enhancedEmotion = emotionalAnalysis.State.ToString();
+            }
+            else if (emotionalAnalysis.DetectedEmotions.Any())
+            {
+                // Supplement with detected emotions
+                var detectedEmotionSummary = string.Join(", ", emotionalAnalysis.DetectedEmotions.Take(3));
+                enhancedEmotion += $" (Detected: {detectedEmotionSummary})";
+            }
+            
             var entry = await _journalManager.CreateEntryAsync(
                 seekerId,
                 input.EntryText,
                 input.MoodScore,
-                input.Emotion
+                enhancedEmotion
             );
 
-            return ObjectMapper.Map<JournalEntryDto>(entry);
+            var result = ObjectMapper.Map<JournalEntryDto>(entry);
+            
+            // Add emotional analysis metadata to the result
+            result.EmotionalStateAnalysis = new EmotionalAnalysisDto
+            {
+                DetectedState = emotionalAnalysis.State.ToString(),
+                PositiveScore = emotionalAnalysis.PositiveScore,
+                NegativeScore = emotionalAnalysis.NegativeScore,
+                IntensityMultiplier = emotionalAnalysis.IntensityMultiplier,
+                DetectedEmotions = emotionalAnalysis.DetectedEmotions,
+                RecommendedApproach = emotionalAnalysis.RecommendedApproach
+            };
+
+            return result;
         }
         /// <summary>
         /// Gets paged journal entries for the current user, with optional search and date filters.

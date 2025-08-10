@@ -49,9 +49,32 @@ The AI categorizes users into three preference types:
    - Example: *"Ah, the classic Monday blues! As an AI, I don't technically experience Mondays, but I've heard they have quite the reputation! 😄"*
 
 3. **Mixed Signals**
-   - Moderate humor with careful observation
-   - Adapts based on ongoing interaction patterns
-   - Example: *"That sounds really tough. Want to talk about what made today particularly challenging? I'm here to listen. 💙"*
+   - Balanced approach with moderate humor
+   - Adapts based on conversation context
+   - Example: *"It sounds like work's been pretty overwhelming lately. Sometimes it helps to step back and take things one day at a time."*
+
+#### 🧠 Advanced Detection Systems
+
+MindMate employs multiple sophisticated detection services for contextually appropriate responses:
+
+**Crisis Detection Service**
+- **Purpose**: Identifies mental health crisis situations requiring professional intervention
+- **Severity Levels**: None, Mild, Low, Medium, High (5-point scale)
+- **Features**: 75+ crisis keywords with severity weighting, escalation pattern detection, positive indicator offsetting, context amplifiers
+
+**Humor Detection Service**  
+- **Purpose**: Analyzes user preferences for humor and determines appropriate humor levels
+- **Humor Levels**: Unknown, Avoid, Minimal, Light, Moderate, High (6-point scale)
+- **Features**: Comprehensive humor engagement analysis, formality detection, context amplifiers and inhibitors
+
+**Emotional State Detection Service**
+- **Purpose**: Tracks emotional states and trends throughout conversations
+- **Emotional States**: VeryNegative to VeryPositive (7-point scale)
+- **Features**: Emotion keyword analysis, intensity modifiers, trend tracking, journey analysis
+
+**Conversation Analysis Service**
+- **Purpose**: Integrates all detection services for comprehensive conversation understanding
+- **Features**: Unified analysis, priority-based recommendations (Crisis > Emotional > Humor), response flags, contextual prompt generation
 
 #### 🔍 Signal Detection
 The system analyzes conversation patterns for:
