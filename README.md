@@ -63,14 +63,16 @@ The system analyzes conversation patterns for:
 
 **Professional Preference Signals:**
 - Formal language patterns
-- Lengthy responses without emotional indicators
+- Lengthy responses without emotional indicators  
 - Direct requests for serious tone
 
 #### 🛡️ Safety & Boundaries
 - **Never jokes about** mental health struggles directly
-- **Always prioritizes** emotional support over entertainment
+- **Always prioritizes** emotional support over entertainment  
 - **Immediately adapts** if user shows discomfort
 - **Maintains professionalism** for crisis situations
+- **Crisis Override**: Automatically switches to professional tone when detecting anxiety
+- **Zero tolerance** for inappropriate humor during vulnerable moments
 
 ### Smart Conversation Memory
 

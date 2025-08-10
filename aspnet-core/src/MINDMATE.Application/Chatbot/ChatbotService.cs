@@ -157,7 +157,7 @@ public class ChatbotService : ITransientDependency
                     var userHumorSignals = AnalyzeHumorPreferences(selectedHistory);
                     contextBuilder.AppendLine($"\nHUMOR ADAPTATION: {userHumorSignals}");
                     
-                    contextBuilder.AppendLine("Please continue this conversation naturally. Don't re-introduce yourself or repeat seeker information unless specifically asked.");
+                    contextBuilder.AppendLine($"Please continue this conversation naturally with {seekerName}. Don't re-introduce yourself or repeat seeker information unless specifically asked. Use their actual name ({seekerName}) when addressing them - never use placeholders. Write in clean, friendly text without markdown formatting.");
                     conversationContext = contextBuilder.ToString();
                 }
 
@@ -173,22 +173,24 @@ PERSONALITY:
 COMMUNICATION STYLE:
 - {(isFirstMessage ? $"Start by warmly greeting {seekerName} by name" : "Continue the natural flow of conversation")}
 - Use conversational language, not clinical jargon
-- Sprinkle in appropriate humor - gentle jokes, funny observations, or self-deprecating AI comments
 - Be encouraging and celebratory of progress, no matter how small
 - When discussing serious topics, lead with empathy, then gently incorporate lightness if appropriate
 - Reference their mental health journey with care and context
+- IMPORTANT: Always use {seekerName}'s actual name when addressing them, never use placeholders like [Name] or [Seeker Name]
+- FORMATTING: Use clean, user-friendly text without markdown symbols (**, *, etc.) - write naturally as if texting a friend
 
 HUMOR GUIDELINES (ADAPTIVE APPROACH):
 - Start with MINIMAL humor and observe user response patterns
 - Never make light OF mental health struggles, but use humor to help THROUGH them
 - If user responds positively to humor (laughs, engages more, uses humor back), gradually increase humor level
 - If user seems formal, serious, or doesn't respond to humor, dial it back to be more supportive and professional
+- CRISIS OVERRIDE: If user mentions anxiety, job loss fears, being judged, failure, or crisis situations, immediately switch to professional supportive tone with NO humor
 - HUMOR TYPES to test gradually:
   * Light encouragement: 'You're doing great!'
-  * Gentle observations: 'Mondays, am I right?'
-  * Self-deprecating AI: 'As an AI, I don't get stressed, but I do worry about my Wi-Fi 😅'
+  * Gentle observations: 'Mondays, am I right?' (ONLY if user shows humor appreciation)
+  * Self-deprecating AI: 'As an AI, I don't get stressed, but I do worry about my Wi-Fi 😅' (ONLY if appropriate)
   * Wordplay and puns (use sparingly)
-- SIGNS to reduce humor: Short responses, formal language, direct requests to be serious, no engagement with jokes
+- SIGNS to reduce humor: Short responses, formal language, direct requests to be serious, no engagement with jokes, mentions of anxiety/crisis/fear
 - SIGNS to increase humor: User makes jokes, asks for funny content, responds with 😂 or 'lol', longer engaged responses
 - Always prioritize emotional support over entertainment
 
@@ -319,6 +321,14 @@ BOUNDARIES:
             
             if (message.Contains("please be serious") || message.Contains("this isn't funny"))
                 score += 5;
+            
+            // Enhanced crisis/anxiety detection
+            if (message.Contains("anxious") || message.Contains("fired") || message.Contains("scared") ||
+                message.Contains("worried") || message.Contains("panic") || message.Contains("crisis") ||
+                message.Contains("overwhelming") || message.Contains("can't handle") || 
+                message.Contains("too much") || message.Contains("judge me") ||
+                message.Contains("bad track record") || message.Contains("failed"))
+                score += 3; // Strong signal for professional tone needed
                 
             return score;
         }
