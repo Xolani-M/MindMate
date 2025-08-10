@@ -20,7 +20,8 @@ namespace MINDMATE.Application.Chatbot
         [HttpPost]
         public async Task<ChatResponseDto> GetChatbotReplyAsync([FromBody] ChatRequestDto request)
         {
-            var reply = await _chatbotService.GetChatbotResponseAsync(request.Message);
+            // Get recent conversation history from the request if available
+            var reply = await _chatbotService.GetChatbotResponseAsync(request.Message, request.ConversationHistory);
             return new ChatResponseDto { Reply = reply };
         }
     }

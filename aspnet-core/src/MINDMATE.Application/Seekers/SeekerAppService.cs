@@ -50,16 +50,11 @@ namespace MINDMATE.Application.Seekers
                     input.EmergencyContactPhone
                 );
 
-                // Prepare email content
-                var subject = "🎉 Welcome to MindMate! 🎉";
+                // Prepare email content using templates
                 var name = input.DisplayName ?? input.Name;
-                var plainTextContent = $"Hey {name}! We're absolutely thrilled you chose MindMate. Get ready for an awesome journey—your mental health matters and we're here to make it fun, supportive, and inspiring. Dive in, explore, and let MindMate be your companion for a happier, healthier you! 🚀";
-                var htmlContent = $"<div style='font-family:sans-serif;font-size:1.1em;'>" +
-                                  $"<h2>Hey {name}! 👋</h2>" +
-                                  $"<p>We're <strong>absolutely thrilled</strong> you chose <span style='color:#4F8A8B;'>MindMate</span>.<br/><br/>" +
-                                  $"Get ready for an <span style='color:#F9A826;'>awesome journey</span>—your mental health matters and we're here to make it <strong>fun, supportive, and inspiring</strong>.<br/><br/>" +
-                                  $"🚀 Dive in, explore, and let MindMate be your companion for a happier, healthier you!<br/><br/>" +
-                                  $"<em>Welcome to the MindMate family!</em></p></div>";
+                var subject = EmailService.EmailTemplates.Welcome.Subject;
+                var plainTextContent = EmailService.EmailTemplates.Welcome.GetPlainTextContent(name);
+                var htmlContent = EmailService.EmailTemplates.Welcome.GetHtmlContent(name);
 
                 // Send welcome email asynchronously
                 await _emailSender.SendEmailAsync(input.Email, subject, plainTextContent, htmlContent);

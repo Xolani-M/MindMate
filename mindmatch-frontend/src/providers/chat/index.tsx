@@ -261,15 +261,25 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch(setError()); // Clear any previous errors
     
     try {
-      // Force the correct format with explicit property name
+      // Build conversation history from recent messages (excluding the current user message)
+      // Send last 50 messages for better context (approximately 10,000-15,000 tokens)
+      const recentHistory = state.messages.slice(-50).map(msg => ({
+        Sender: msg.sender,
+        Message: msg.text,
+        Timestamp: new Date(msg.createdAt)
+      }));
+      
+      // Force the correct format with explicit property name and conversation history
       const requestPayload = {
-        "Message": text.trim() // Ensure proper format and trim whitespace
+        "Message": text.trim(),
+        "ConversationHistory": recentHistory
       };
       
-      console.log('🚀 Sending chat request with payload:', requestPayload);
-      console.log('🚀 Request payload type:', typeof requestPayload.Message);
-      console.log('🚀 Request payload stringified:', JSON.stringify(requestPayload));
-      console.log('🚀 Object keys:', Object.keys(requestPayload));
+      console.log('🚀 Sending chat request with payload:', {
+        message: requestPayload.Message,
+        historyCount: requestPayload.ConversationHistory.length,
+        totalCharacters: recentHistory.reduce((sum, msg) => sum + msg.Message.length, 0)
+      });
       
       const res = await axiosInstance.post(
         "/api/services/app/Chat/GetChatbotReply",
