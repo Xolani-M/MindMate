@@ -4,7 +4,8 @@ export type ChatAction =
   | { type: 'SEND_MESSAGE'; payload: IChatMessage }
   | { type: 'RECEIVE_MESSAGE'; payload: IChatMessage }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | undefined };
+  | { type: 'SET_ERROR'; payload: string | undefined }
+  | { type: 'CLEAR_HISTORY' };
 
 export const sendMessage = (message: IChatMessage): ChatAction => ({
   type: 'SEND_MESSAGE',
@@ -24,4 +25,8 @@ export const setLoading = (loading: boolean): ChatAction => ({
 export const setError = (error?: string): ChatAction => ({
   type: 'SET_ERROR',
   payload: error,
+});
+
+export const clearHistory = (): ChatAction => ({
+  type: 'CLEAR_HISTORY',
 });

@@ -7,12 +7,12 @@
  */
 
 "use client";
-import React, { useReducer, useContext, useMemo, useCallback } from "react";
+import React, { useReducer, useContext, useMemo, useCallback, useEffect } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
 import { ChatStateContext, ChatActionContext } from "./context";
-import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
+import { sendMessage, receiveMessage, setLoading, setError, clearHistory as clearHistoryAction } from "./actions";
 import { chatReducer, initialChatState } from "./reducer";
 
 //#region Type Definitions
@@ -36,6 +36,52 @@ interface IAxiosError {
 //#endregion Type Definitions
 
 //#region Utility Functions
+
+/**
+ * Chat storage key for localStorage
+ */
+const CHAT_STORAGE_KEY = 'mindmate_chat_history';
+
+/**
+ * Loads chat history from localStorage
+ * 
+ * @returns Saved chat messages or empty array
+ */
+const loadChatHistory = (): IChatMessage[] => {
+  if (typeof window === 'undefined') return [];
+  
+  try {
+    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validate the data structure
+      if (Array.isArray(parsed) && parsed.every(msg => 
+        msg.id && msg.sender && msg.text && msg.createdAt
+      )) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load chat history:', error);
+  }
+  
+  return [];
+};
+
+/**
+ * Saves chat history to localStorage
+ * 
+ * @param messages - Chat messages to save
+ */
+const saveChatHistory = (messages: IChatMessage[]): void => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+  } catch (error) {
+    console.warn('Failed to save chat history:', error);
+  }
+};
 
 /**
  * Type guard to check if error is an Axios error
@@ -95,7 +141,16 @@ const processApiError = (err: unknown): string => {
 //#endregion Utility Functions
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = useReducer(chatReducer, initialChatState);
+  // Initialize state with saved chat history
+  const [state, dispatch] = useReducer(chatReducer, {
+    ...initialChatState,
+    messages: loadChatHistory()
+  });
+
+  // Save chat history whenever messages change
+  React.useEffect(() => {
+    saveChatHistory(state.messages);
+  }, [state.messages]);
 
   //#region Event Handlers
 
@@ -170,10 +225,24 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch(setError());
   }, []);
 
+  /**
+   * Clears all chat history
+   */
+  const clearHistory = useCallback((): void => {
+    dispatch({ type: 'CLEAR_HISTORY' });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+    }
+  }, []);
+
   //#endregion Event Handlers
 
   // Memoize actions to avoid unnecessary rerenders
-  const actions = useMemo(() => ({ sendUserMessage, clearError }), [sendUserMessage, clearError]);
+  const actions = useMemo(() => ({ 
+    sendUserMessage, 
+    clearError, 
+    clearHistory 
+  }), [sendUserMessage, clearError, clearHistory]);
 
   return (
     <ChatStateContext.Provider value={state}>

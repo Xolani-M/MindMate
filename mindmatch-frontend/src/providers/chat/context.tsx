@@ -4,6 +4,7 @@ import { ChatState } from "./types";
 export interface ChatActions {
   sendUserMessage: (text: string) => Promise<void>;
   clearError: () => void;
+  clearHistory: () => void;
 }
 
 export const ChatStateContext = createContext<ChatState>({

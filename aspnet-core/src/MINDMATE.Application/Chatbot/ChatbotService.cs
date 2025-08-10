@@ -93,6 +93,11 @@ public class ChatbotService : ITransientDependency
 
                 // Build dashboard data safely
                 var seekerName = !string.IsNullOrWhiteSpace(seeker.DisplayName) ? seeker.DisplayName : (seeker.Name ?? "Seeker");
+                
+                // Debug logging to check seeker data
+                System.Diagnostics.Debug.WriteLine($"Chatbot Debug - Seeker ID: {seeker.Id}, UserId: {seeker.UserId}");
+                System.Diagnostics.Debug.WriteLine($"Chatbot Debug - DisplayName: '{seeker.DisplayName}', Name: '{seeker.Name}', Final seekerName: '{seekerName}'");
+                
                 var latestMood = seeker.Moods?
                     .OrderByDescending(m => m.EntryDate)
                     .FirstOrDefault()?.Level.ToString() ?? "Unknown";

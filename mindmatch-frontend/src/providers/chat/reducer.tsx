@@ -33,6 +33,13 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         error: action.payload,
         loading: false,
       };
+    case 'CLEAR_HISTORY':
+      return {
+        ...state,
+        messages: [],
+        error: undefined,
+        loading: false,
+      };
     default:
       return state;
   }
