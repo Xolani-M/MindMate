@@ -270,7 +270,8 @@ export default function AnalyticsPage() {
       ]);
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('❌ Failed to load analytics data:', error);
+          // Intentionally left for analytics testing
+          console.error('❌ Failed to load analytics data:', error);
     }
   }, [getRealTimeAnalytics, getCrisisPreventionAnalytics, getTherapeuticGoals]);
 
@@ -285,7 +286,8 @@ export default function AnalyticsPage() {
       setAiPatternAnalysis(patternAnalysis as IAIPatternAnalysis);
       setAiRecommendations(recommendations as IAIRecommendations);
     } catch (error) {
-      console.error('❌ Failed to load AI enhancements:', error);
+          // Intentionally left for analytics testing
+          console.error('❌ Failed to load AI enhancements:', error);
     } finally {
       setAiAnalyticsLoading(false);
     }
@@ -308,7 +310,8 @@ export default function AnalyticsPage() {
       const analysis = await getAIEmotionalAnalysis(journalText);
       setAiEmotionalAnalysis(analysis as IAIEmotionalAnalysis);
     } catch (error) {
-      console.error('❌ Failed to analyze emotional text:', error);
+          // Intentionally left for analytics testing
+          console.error('❌ Failed to analyze emotional text:', error);
     } finally {
       setAiAnalyticsLoading(false);
     }
@@ -340,10 +343,10 @@ export default function AnalyticsPage() {
 
   if (!realTimeAnalytics) {
     return (
-      <div style={{ padding: 32, textAlign: 'center', color: '#888' }}>
-        <h2>Analytics data not available</h2>
-        <p>We couldn&apos;t load your analytics data. Please check the console for debug info and try refreshing the page.</p>
-      </div>
+      <ModernErrorState 
+        message={"Analytics data is currently unavailable. This may be due to a temporary issue or connectivity problem. Please try refreshing, or check your connection. If the problem persists, contact support for assistance."}
+        onRetry={() => loadAnalyticsData()}
+      />
     );
   }
   // #endregion
@@ -358,11 +361,7 @@ export default function AnalyticsPage() {
               Mental Health Analytics
             </h1>
             <p style={analyticsStyles.subtitle}>
-              Comprehensive insights into your emotional wellbeing, progress tracking, and personalized recommendations
-              <br />
-              <span style={{ color: '#6366f1', fontWeight: 600 }}>
-                🤖 Now featuring AI-powered emotional analysis using Google Gemini
-              </span>
+              Comprehensive insights into your emotional wellbeing, progress tracking, and personalized recommendations.
             </p>
             <button 
               style={analyticsStyles.refreshButton}
@@ -384,8 +383,7 @@ export default function AnalyticsPage() {
               <div style={analyticsStyles.cardHeader}>
                 <Icons.WellnessIcon />
                 <h2 style={analyticsStyles.cardTitle}>
-                  Current Emotional State 
-                  {aiPatternAnalysis && <span style={{ color: '#6366f1', fontSize: '0.8rem', marginLeft: '8px' }}>🤖 AI Enhanced</span>}
+                  Current Emotional State
                 </h2>
               </div>
               
@@ -413,7 +411,7 @@ export default function AnalyticsPage() {
                   
                   <div>
                     <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>
-                      {aiRecommendations ? '🤖 AI-Powered Recommendations' : 'Live Recommendations'}
+                      Recommendations
                     </h4>
                     <ul style={analyticsStyles.insightsList}>
                       {/* Show AI recommendations if available, otherwise use live recommendations */}
@@ -435,7 +433,7 @@ export default function AnalyticsPage() {
                         border: '1px solid rgba(99, 102, 241, 0.2)',
                       }}>
                         <h5 style={{ fontSize: '0.9rem', color: '#6366f1', marginBottom: '4px' }}>
-                          🤖 AI Trend Analysis:
+                          Emotional Trends:
                         </h5>
                         <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
                           {aiPatternAnalysis.trends}
@@ -553,7 +551,6 @@ export default function AnalyticsPage() {
                 <Icons.MindfulnessIcon />
                 <h2 style={analyticsStyles.cardTitle}>
                   Therapeutic Goals
-                  {aiRecommendations && <span style={{ color: '#6366f1', fontSize: '0.8rem', marginLeft: '8px' }}>🤖 AI Enhanced</span>}
                 </h2>
               </div>
               
@@ -583,7 +580,7 @@ export default function AnalyticsPage() {
                   {aiRecommendations?.weeklyGoals && (
                     <div style={{ marginBottom: '24px' }}>
                       <h4 style={{ marginBottom: '16px', color: '#6366f1' }}>
-                        🤖 AI Weekly Recommendations
+                        Weekly Recommendations
                       </h4>
                       <ul style={analyticsStyles.insightsList}>
                         {aiRecommendations.weeklyGoals.slice(0, 2).map((goal: string) => (
@@ -693,15 +690,14 @@ export default function AnalyticsPage() {
             <div style={analyticsStyles.cardHeader}>
               <Icons.BrainIcon />
               <h2 style={{...analyticsStyles.cardTitle, color: '#8b5cf6'}}>
-                🤖 Instant AI Emotional Analysis
+                Instant Emotional Analysis
               </h2>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
               <div>
                 <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '16px' }}>
-                  Get immediate insights into your emotional state powered by Google Gemini AI. 
-                  Write about your current feelings and receive personalized analysis.
+                  Get immediate insights into your emotional state. Write about your current feelings and receive personalized analysis.
                 </p>
                 <textarea
                   placeholder="Write about how you're feeling right now for instant AI emotional analysis..."
@@ -738,7 +734,7 @@ export default function AnalyticsPage() {
                   }}
                   disabled={aiAnalyticsLoading}
                 >
-                  {aiAnalyticsLoading ? '🤖 Analyzing...' : '🤖 Analyze with AI'}
+                  {aiAnalyticsLoading ? 'Analyzing...' : 'Analyze'}
                 </button>
                 <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '8px' }}>
                   Tip: Press Ctrl+Enter to analyze quickly
@@ -846,7 +842,7 @@ export default function AnalyticsPage() {
               gap: '8px',
             }}>
               <Icons.BrainIcon size="small" />
-              Powered by AI technology including Google Gemini for advanced emotional analysis
+              Insights and support, designed for you
             </p>
           </div>
         </main>
