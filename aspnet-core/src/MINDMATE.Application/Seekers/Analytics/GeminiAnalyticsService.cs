@@ -29,29 +29,34 @@ namespace MINDMATE.Application.Seekers.Analytics
         public GeminiAnalyticsService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-
-            // Use same Gemini configuration as ChatbotService
-            _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ??
-                        Environment.GetEnvironmentVariable("GEMINI_API_KEY") ??
-                        configuration["Gemini:ApiKey"];
-            _geminiEndpoint = configuration["Gemini:ApiEndpoint"];
-
-            // Handle unresolved placeholders or invalid config
-            if (string.IsNullOrWhiteSpace(_geminiEndpoint) || _geminiEndpoint.Contains("${"))
-                _geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-
-            if (string.IsNullOrWhiteSpace(_geminiKey))
-                throw new InvalidOperationException("Gemini API key is not configured for analytics.");
-
-            // Extract base URI from full endpoint URL
-            if (Uri.TryCreate(_geminiEndpoint, UriKind.Absolute, out var fullUri))
+            try
             {
-                var baseUri = new Uri($"{fullUri.Scheme}://{fullUri.Host}");
+                // Use same Gemini configuration as ChatbotService
+                _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ??
+                            Environment.GetEnvironmentVariable("GEMINI_API_KEY") ??
+                            configuration["Gemini:ApiKey"];
+                _geminiEndpoint = Environment.GetEnvironmentVariable("Gemini__ApiEndpoint") ??
+                                 configuration["Gemini:ApiEndpoint"] ??
+                                 "https://generativelanguage.googleapis.com/";
+
+                // Log configuration status for debugging
+                var hasKey = !string.IsNullOrWhiteSpace(_geminiKey);
+                System.Diagnostics.Debug.WriteLine($"GeminiAnalyticsService initialized - HasApiKey: {hasKey}, Endpoint: {_geminiEndpoint}");
+
+                if (string.IsNullOrWhiteSpace(_geminiKey))
+                {
+                    throw new InvalidOperationException("Gemini API key is not configured. Please set Gemini:ApiKey in configuration or GEMINI_API_KEY environment variable.");
+                }
+
+                // Always set BaseAddress to the base URL (no path)
+                var baseUri = new Uri(_geminiEndpoint);
                 _httpClient.BaseAddress = baseUri;
+                System.Diagnostics.Debug.WriteLine($"HttpClient BaseAddress set to: {baseUri}");
             }
-            else
+            catch (Exception ex)
             {
-                throw new InvalidOperationException($"Gemini API endpoint is not a valid absolute URI: '{_geminiEndpoint}'");
+                System.Diagnostics.Debug.WriteLine($"ERROR initializing GeminiAnalyticsService: {ex}");
+                throw;
             }
         }
 
@@ -62,9 +67,23 @@ namespace MINDMATE.Application.Seekers.Analytics
         /// </summary>
         public async Task<GeminiEmotionalAnalysisDto> AnalyzeEmotionalStateWithAI(string journalText)
         {
-            var prompt = CreateEmotionalAnalysisPrompt(journalText);
-            var response = await CallGeminiApiAsync(prompt);
-            return ParseEmotionalAnalysisResponse(response);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(journalText))
+                {
+                    return CreateFallbackEmotionalAnalysis("No journal text provided");
+                }
+
+                var prompt = CreateEmotionalAnalysisPrompt(journalText);
+                var response = await CallGeminiApiAsync(prompt);
+                return ParseEmotionalAnalysisResponse(response);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (you can replace this with your logging framework)
+                System.Diagnostics.Debug.WriteLine($"GeminiAnalyticsService.AnalyzeEmotionalStateWithAI failed: {ex}");
+                return CreateFallbackEmotionalAnalysis($"AI analysis failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -72,9 +91,22 @@ namespace MINDMATE.Application.Seekers.Analytics
         /// </summary>
         public async Task<GeminiPatternAnalysisDto> AnalyzePatternsWithAI(List<JournalEntry> journalEntries)
         {
-            var prompt = CreatePatternAnalysisPrompt(journalEntries);
-            var response = await CallGeminiApiAsync(prompt);
-            return ParsePatternAnalysisResponse(response);
+            try
+            {
+                if (journalEntries == null || !journalEntries.Any())
+                {
+                    return CreateFallbackPatternAnalysis("No journal entries provided");
+                }
+
+                var prompt = CreatePatternAnalysisPrompt(journalEntries);
+                var response = await CallGeminiApiAsync(prompt);
+                return ParsePatternAnalysisResponse(response);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GeminiAnalyticsService.AnalyzePatternsWithAI failed: {ex}");
+                return CreateFallbackPatternAnalysis($"AI pattern analysis failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -254,16 +286,27 @@ Base recommendations on evidence-based therapeutic practices and individual patt
             try
             {
                 var cleanJson = ExtractJsonFromResponse(response);
+                
+                if (string.IsNullOrWhiteSpace(cleanJson))
+                {
+                    System.Diagnostics.Debug.WriteLine("No JSON found in Gemini response");
+                    return CreateFallbackEmotionalAnalysis("Invalid AI response format");
+                }
+
                 var analysis = JsonSerializer.Deserialize<JsonElement>(cleanJson);
 
                 // Parse PrimaryEmotion as enum if possible, else fallback to Neutral
                 var primaryEmotionStr = GetStringProperty(analysis, "primaryEmotion");
-                EmotionalState primaryEmotionEnum = EmotionalState.Neutral;
-                Enum.TryParse(primaryEmotionStr, true, out primaryEmotionEnum);
+                if (!Enum.TryParse<EmotionalState>(primaryEmotionStr, true, out var primaryEmotionEnum))
+                {
+                    primaryEmotionEnum = EmotionalState.Neutral;
+                }
 
                 var crisisRiskLevelStr = GetStringProperty(analysis, "riskLevel");
-                CrisisLevel crisisRiskLevelEnum = CrisisLevel.Low;
-                Enum.TryParse(crisisRiskLevelStr, true, out crisisRiskLevelEnum);
+                if (!Enum.TryParse<CrisisLevel>(crisisRiskLevelStr, true, out var crisisRiskLevelEnum))
+                {
+                    crisisRiskLevelEnum = CrisisLevel.Low;
+                }
 
                 return new GeminiEmotionalAnalysisDto
                 {
@@ -275,26 +318,19 @@ Base recommendations on evidence-based therapeutic practices and individual patt
                     CopingMechanisms = GetStringArrayProperty(analysis, "copingMechanisms"),
                     ImmediateRecommendations = GetStringArrayProperty(analysis, "recommendations"),
                     CrisisRiskLevel = crisisRiskLevelEnum,
-                    ConfidenceScore = GetDoubleProperty(analysis, "confidence"),
+                    ConfidenceScore = GetDoubleProperty(analysis, "confidenceScore"),
                     AnalysisTimestamp = DateTime.UtcNow
                 };
             }
+            catch (JsonException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"JSON parsing error in emotional analysis: {ex}");
+                return CreateFallbackEmotionalAnalysis($"JSON parsing error: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                // Fallback to basic analysis if AI parsing fails
-                return new GeminiEmotionalAnalysisDto
-                {
-                    PrimaryEmotion = EmotionalState.Neutral,
-                    EmotionalIntensity = 0,
-                    PositivityScore = 0,
-                    NegativityScore = 0,
-                    EmotionalTriggers = new List<string> { "AI analysis unavailable" },
-                    CopingMechanisms = new List<string>(),
-                    ImmediateRecommendations = new List<string>(),
-                    CrisisRiskLevel = CrisisLevel.Low,
-                    ConfidenceScore = 0.0,
-                    AnalysisTimestamp = DateTime.UtcNow
-                };
+                System.Diagnostics.Debug.WriteLine($"Unexpected error in emotional analysis parsing: {ex}");
+                return CreateFallbackEmotionalAnalysis($"Parsing error: {ex.Message}");
             }
         }
 
@@ -406,6 +442,11 @@ Base recommendations on evidence-based therapeutic practices and individual patt
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(_geminiKey))
+                {
+                    throw new InvalidOperationException("Gemini API key is not configured");
+                }
+
                 var requestBody = new
                 {
                     contents = new[]
@@ -430,23 +471,52 @@ Base recommendations on evidence-based therapeutic practices and individual patt
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+                // Always use the same relative endpoint as ChatbotService
                 var relativeEndpoint = "v1beta/models/gemini-2.0-flash:generateContent?key=" + _geminiKey;
+                System.Diagnostics.Debug.WriteLine($"Calling Gemini API: {_httpClient.BaseAddress}{relativeEndpoint}");
                 var response = await _httpClient.PostAsync(relativeEndpoint, content);
 
+                var responseBody = await response.Content.ReadAsStringAsync();
+                
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new HttpRequestException($"Gemini API call failed: {response.StatusCode}");
+                    System.Diagnostics.Debug.WriteLine($"Gemini API error response: {response.StatusCode} - {responseBody}");
+                    throw new HttpRequestException($"Gemini API call failed: {response.StatusCode} - {responseBody}");
                 }
 
-                var responseBody = await response.Content.ReadAsStringAsync();
                 var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
-                return responseJson
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString() ?? "";
+                // Check if the response has the expected structure
+                if (!responseJson.TryGetProperty("candidates", out var candidates) || 
+                    candidates.GetArrayLength() == 0)
+                {
+                    throw new InvalidOperationException("Gemini API response missing candidates");
+                }
+
+                var candidate = candidates[0];
+                if (!candidate.TryGetProperty("content", out var contentElement) ||
+                    !contentElement.TryGetProperty("parts", out var parts) ||
+                    parts.GetArrayLength() == 0)
+                {
+                    throw new InvalidOperationException("Gemini API response missing content structure");
+                }
+
+                var textContent = parts[0].GetProperty("text").GetString();
+                
+                if (string.IsNullOrWhiteSpace(textContent))
+                {
+                    throw new InvalidOperationException("Gemini API returned empty response");
+                }
+
+                return textContent;
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new InvalidOperationException($"Gemini API network error: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Gemini API response parsing error: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
@@ -529,6 +599,39 @@ Base recommendations on evidence-based therapeutic practices and individual patt
                 "high" => CrisisLevel.High,
                 "critical" => CrisisLevel.High, // Map critical to high
                 _ => CrisisLevel.Low
+            };
+        }
+
+        #endregion
+
+        #region Fallback Methods
+
+        private GeminiEmotionalAnalysisDto CreateFallbackEmotionalAnalysis(string errorMessage)
+        {
+            return new GeminiEmotionalAnalysisDto
+            {
+                PrimaryEmotion = EmotionalState.Neutral,
+                EmotionalIntensity = 0,
+                PositivityScore = 0,
+                NegativityScore = 0,
+                EmotionalTriggers = new List<string> { errorMessage },
+                CopingMechanisms = new List<string>(),
+                ImmediateRecommendations = new List<string> { "Consider journaling about your feelings", "Practice deep breathing exercises" },
+                CrisisRiskLevel = CrisisLevel.Low,
+                ConfidenceScore = 0.0,
+                AnalysisTimestamp = DateTime.UtcNow
+            };
+        }
+
+        private GeminiPatternAnalysisDto CreateFallbackPatternAnalysis(string errorMessage)
+        {
+            return new GeminiPatternAnalysisDto
+            {
+                KeyInsights = new List<string> { errorMessage },
+                RecommendedInterventions = new List<string> { "Continue regular journaling", "Monitor mood patterns" },
+                PatternConfidence = 0.0,
+                AnalyzedEntriesCount = 0,
+                AnalysisTimestamp = DateTime.UtcNow
             };
         }
 

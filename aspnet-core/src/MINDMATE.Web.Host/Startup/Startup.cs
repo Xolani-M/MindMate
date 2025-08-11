@@ -42,6 +42,9 @@ namespace MINDMATE.Web.Host.Startup
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // Register HttpClient for GeminiAnalyticsService
+            services.AddHttpClient();
+            
             // Register SendGrid EmailSender service
             services.AddTransient<IEmailSender, EmailSender>();
             //MVC
