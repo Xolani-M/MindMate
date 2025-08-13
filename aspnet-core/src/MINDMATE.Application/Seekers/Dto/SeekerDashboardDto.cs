@@ -10,7 +10,7 @@ namespace MINDMATE.Seekers.Dto
     {
         public int TotalJournalEntries { get; set; }
         public string LatestMood { get; set; }
-        public double AverageMoodLast7Days { get; set; }
+    public string AverageMoodLast7Days { get; set; }
         public string RiskLevel { get; set; }
         public int? LatestPhq9Score { get; set; }
         public int? LatestGad7Score { get; set; }
