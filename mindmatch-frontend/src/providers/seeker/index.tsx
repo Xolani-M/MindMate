@@ -67,7 +67,6 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
     const endpoint = "/api/services/app/Seeker/GetMyDashboard";
     await axiosInstance.get(endpoint)
       .then((response: { data: { result: unknown } }) => {
-        console.log('🔎 Dashboard API response:', response.data);
         dispatch(getDashboardSuccess(response.data.result as ISeekerDashboard));
       })
       .catch((error) => {
@@ -135,7 +134,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await axiosInstance.get(endpoint);
       return response.data?.result;
     } catch (error: unknown) {
-      console.error('Failed to fetch comprehensive analytics:', error);
+  // Error handling removed for production cleanliness
       throw error;
     }
   };
@@ -147,7 +146,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await axiosInstance.post(endpoint, { journalText });
       return response.data?.result;
     } catch (error: unknown) {
-      console.error('Failed to fetch AI emotional analysis:', error);
+  // Error handling removed for production cleanliness
       throw error;
     }
   };
@@ -158,7 +157,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await axiosInstance.get(endpoint);
       return response.data?.result;
     } catch (error: unknown) {
-      console.error('Failed to fetch AI pattern analysis:', error);
+  // Error handling removed for production cleanliness
       throw error;
     }
   };
@@ -169,7 +168,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await axiosInstance.get(endpoint);
       return response.data?.result;
     } catch (error: unknown) {
-      console.error('Failed to fetch AI recommendations:', error);
+  // Error handling removed for production cleanliness
       throw error;
     }
   };

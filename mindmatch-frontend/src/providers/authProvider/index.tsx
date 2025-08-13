@@ -28,32 +28,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
 
-        console.log('🏁 Session restoration useEffect triggered, current state:', {
-            hasUser: !!state.user,
-            userToken: state.user?.token ? 'present' : 'missing',
-            seekerId: state.user?.seekerId,
-            isSessionLoading: state.isSessionLoading
-        });
+    // Debug log removed for production cleanliness
         
         // Check if user is already in state to avoid overwriting fresh login
         if (state.user) {
-            console.log('👤 User already in state, completing session restoration');
+            // Debug log removed for production cleanliness
             dispatch(sessionRestoreComplete(state.user));
             return;
         }
         
         const token = sessionStorage.getItem('token');
-        const seekerId = sessionStorage.getItem('SeekerId');
-        const role = sessionStorage.getItem('role');
-        const userId = sessionStorage.getItem('Id');
+    const seekerId = sessionStorage.getItem('SeekerId');
         
         if (token) {
-            console.log('🔑 Found token in storage, attempting session restoration...');
             try {
                 const decoded = decodeToken(token);
                 const decodedSeekerId = decoded['seekerId'] || seekerId;
-                const decodedRole = decoded[AbpTokenProperies.role] || role;
-                const decodedUserId = decoded[AbpTokenProperies.nameidentifier] || userId;
                 
                 // Check if token is still valid (not expired)
                 const currentTime = Math.floor(Date.now() / 1000);
@@ -61,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (tokenExp && currentTime >= tokenExp) {
                     // Token is expired, clear session
-                    console.log('⏰ Token expired, clearing session');
+                    // Debug log removed for production cleanliness
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('SeekerId');
                     sessionStorage.removeItem('role');
@@ -76,16 +66,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     seekerId: decodedSeekerId || undefined,
                 };
                 
-                console.log('🔄 Restoring user session:', { 
-                    seekerId: decodedSeekerId, 
-                    role: decodedRole,
-                    userId: decodedUserId,
-                    hasExistingUser: !!state.user
-                });
+                // Debug log removed for production cleanliness
                 
                 dispatch(sessionRestoreComplete(user));
-            } catch (error) {
-                console.error('❌ Failed to restore user session:', error);
+            } catch {
+                // Error handling removed for production cleanliness
                 // Clear invalid token
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('SeekerId');
@@ -94,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 dispatch(sessionRestoreComplete(undefined));
             }
         } else {
-            console.log('🚫 No token found in storage for session restoration');
+            // Debug log removed for production cleanliness
             dispatch(sessionRestoreComplete(undefined)); // Complete with no user
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,12 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Debug effect to monitor auth state changes
     useEffect(() => {
-        console.log('🔄 Auth state changed:', {
-            hasUser: !!state.user,
-            userToken: state.user?.token ? 'present' : 'missing',
-            seekerId: state.user?.seekerId,
-            timestamp: new Date().toISOString()
-        });
+        // Debug log removed for production cleanliness
     }, [state.user]);
 
     // Reset Auth State
@@ -185,9 +165,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const registerSeeker = useCallback(async (user: IUser) => {
         dispatch(registerSeekerPending());
         const endpoint = '/api/services/app/Seeker/Create';
-        console.log("🚀 Registering seeker with endpoint:", endpoint);
-        console.log("🔗 Axios base URL:", instance.defaults.baseURL);
-        console.log("📝 Payload:", user);
+    // Debug logs removed for production cleanliness
         try {
             const response = await instance.post(endpoint, user);
             // Get seekerId from response and store it
@@ -198,7 +176,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             dispatch(registerSeekerSuccess(response.data));
             router.push('/login');
         } catch (error) {
-            console.error("❌ Registration error:", error);
+            // Error handling removed for production cleanliness
             const errorMessage = getErrorMessage(error);
             dispatch(registerSeekerError(errorMessage));
         }
@@ -215,77 +193,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 rememberClient: true
             };
             
-            console.log('🚀 Attempting login with payload:', {
-                email: user.email,
-                hasPassword: !!user.password,
-                endpoint
-            });
-            
             const response = await instance.post(endpoint, payload);
-            
-            console.log('📦 Login response received:', {
-                status: response.status,
-                hasResult: !!response.data?.result,
-                hasAccessToken: !!response.data?.result?.accessToken,
-                fullResponse: response.data
-            });
-            
             if (!response.data?.result?.accessToken) {
                 throw new Error('No access token received from server');
             }
-            
             const token = response.data.result.accessToken;
             const decoded = decodeToken(token);
-
-            console.log('🔓 Decoded token contents:', {
-                allTokenData: decoded,
-                tokenKeys: Object.keys(decoded)
-            });
-
             const userRole = decoded[AbpTokenProperies.role];
             const userId = decoded[AbpTokenProperies.nameidentifier];
             const seekerId = decoded['seekerId'];
-
-            console.log('🔑 Login successful, storing token:', {
-                tokenLength: token.length,
-                tokenStart: token.substring(0, 20) + '...',
-                userRole,
-                userId,
-                seekerId
-            });
-
             sessionStorage.setItem('token', token);
             sessionStorage.setItem('role', userRole ?? '');
             sessionStorage.setItem('Id', userId ?? '');
-
             if (seekerId) {
                 sessionStorage.setItem('SeekerId', seekerId);
             }
-
-            console.log('✅ Token stored in sessionStorage, verifying:', {
-                storedToken: sessionStorage.getItem('token')?.substring(0, 20) + '...',
-                storedRole: sessionStorage.getItem('role'),
-                storedId: sessionStorage.getItem('Id'),
-                storedSeekerId: sessionStorage.getItem('SeekerId')
-            });
-
-            // Create user object with available data
             const userObject = { ...user, token, seekerId };
-            console.log('👤 Dispatching user to state:', {
-                originalUser: user,
-                userObjectKeys: Object.keys(userObject),
-                userObject: userObject
-            });
-
-            // Pass user object with token and seekerId to reducer
             dispatch(loginUserSuccess(userObject));
-            
-            console.log('🎯 Login dispatch completed, current state will update');
-            
-            // Immediate redirect after state update
             router.push('/seeker/dashboard');
         } catch (error: unknown) {
-            console.error('Login error:', error);
+            // Error handling removed for production cleanliness
             const errorMessage = getErrorMessage(error);
             dispatch(loginUserError(errorMessage));
         }

@@ -46,7 +46,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       dispatch(getRecentSuccess(data.result || []));
     } catch (err) {
       const errorMsg = handleError(err, "Failed to fetch recent moods");
-      console.error("Mood getRecent error:", err);
+  // Error handling removed for production cleanliness
       dispatch(getRecentError(errorMsg));
     }
   }, []);
@@ -58,7 +58,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       dispatch(getTrendSuccess(data.result));
     } catch (err) {
       const errorMsg = handleError(err, "Failed to fetch mood trend");
-      console.error("Mood getTrend error:", err);
+  // Error handling removed for production cleanliness
       dispatch(getTrendError(errorMsg));
     }
   }, []);
@@ -77,7 +77,7 @@ export const MoodProvider = ({ children }: { children: React.ReactNode }) => {
       await getRecent();
     } catch (err) {
       const errorMsg = handleError(err, "Failed to create mood entry");
-      console.error("Mood create error:", err);
+  // Error handling removed for production cleanliness
       dispatch(createError(errorMsg));
     }
   }, [getRecent]);

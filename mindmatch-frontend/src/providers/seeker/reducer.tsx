@@ -16,12 +16,20 @@ export const SeekerReducer = handleActions<ISeekerStateContext, ISeekerStateCont
     seekerDashboardPending: true,
     seekerDashboardError: null,
   }),
-  [SeekerActionEnums.getDashboardSuccess]: (state, action) => ({
-    ...state,
-    seekerDashboard: (action.payload as any).seekerDashboard || (action.payload as unknown as ISeekerDashboard),
-    seekerDashboardPending: false,
-    seekerDashboardError: null,
-  }),
+  [SeekerActionEnums.getDashboardSuccess]: (state, action) => {
+    let dashboard: ISeekerDashboard | null = null;
+    if (action.payload && typeof action.payload === 'object' && 'seekerDashboard' in action.payload) {
+      dashboard = (action.payload as ISeekerStateContext).seekerDashboard as ISeekerDashboard;
+    } else {
+      dashboard = action.payload as unknown as ISeekerDashboard;
+    }
+    return {
+      ...state,
+      seekerDashboard: dashboard,
+      seekerDashboardPending: false,
+      seekerDashboardError: null,
+    };
+  },
   [SeekerActionEnums.getDashboardError]: (state, action) => ({
     ...state,
     seekerDashboard: null,

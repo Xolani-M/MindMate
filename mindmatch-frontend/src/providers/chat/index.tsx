@@ -1,7 +1,7 @@
 
 /**
  "use client";
-import React, { useReducer, useContext, useMemo, useCallback, useEffect } from "react";
+import React, { useReducer, useContext, useMemo, useCallback } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
@@ -14,7 +14,7 @@ import { chatReducer, initialChatState } from "./reducer";verview Chat Provider 
  */
 
 "use client";
-import React, { useReducer, useContext, useMemo, useCallback, useEffect } from "react";
+import React, { useReducer, useContext, useMemo, useCallback } from "react";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
@@ -90,8 +90,8 @@ const loadChatHistory = (): IChatMessage[] => {
         return parsed;
       }
     }
-  } catch (error) {
-    console.warn('Failed to load chat history:', error);
+  } catch {
+    // Optionally log to external service or ignore for production
   }
   
   return [];
@@ -108,8 +108,8 @@ const saveChatHistory = (messages: IChatMessage[]): void => {
   try {
     const storageKey = getUserChatStorageKey();
     localStorage.setItem(storageKey, JSON.stringify(messages));
-  } catch (error) {
-    console.warn('Failed to save chat history:', error);
+  } catch {
+    // Optionally log to external service or ignore for production
   }
 };
 
@@ -126,8 +126,8 @@ const clearAllChatHistory = (): void => {
     
     // Also clear the default key for backwards compatibility
     localStorage.removeItem(CHAT_STORAGE_KEY);
-  } catch (error) {
-    console.warn('Failed to clear chat history:', error);
+  } catch {
+    // Optionally log to external service or ignore for production
   }
 };
 
@@ -149,8 +149,6 @@ const isAxiosError = (error: unknown): error is IAxiosError => {
  */
 const processApiError = (err: unknown): string => {
   if (isAxiosError(err)) {
-    console.error('Response status:', err.response.status);
-    console.error('Response data:', err.response.data);
     
     const { status, data } = err.response;
     
@@ -178,11 +176,9 @@ const processApiError = (err: unknown): string => {
   }
   
   if (err instanceof Error) {
-    console.error('Network error:', err.message);
     return `Connection error: ${err.message}. Please check your internet connection.`;
   }
   
-  console.error('Unknown error:', err);
   return "An unexpected error occurred. Please try again.";
 };
 
@@ -214,7 +210,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       
       // If user was logged in but now has no token (logged out)
       if (currentUserToken && !token) {
-        console.log('🧹 User logged out, clearing chat history');
+  // Debug log removed for production cleanliness
         dispatch({ type: 'CLEAR_HISTORY' });
         clearAllChatHistory();
       }
@@ -275,11 +271,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         "ConversationHistory": recentHistory
       };
       
-      console.log('🚀 Sending chat request with payload:', {
-        message: requestPayload.Message,
-        historyCount: requestPayload.ConversationHistory.length,
-        totalCharacters: recentHistory.reduce((sum, msg) => sum + msg.Message.length, 0)
-      });
       
       const res = await axiosInstance.post(
         "/api/services/app/Chat/GetChatbotReply",
@@ -291,7 +282,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         }
       );
 
-      console.log('✅ Chat API Response:', res.data);
 
       if (res.data.success && res.data.result?.reply) {
         const botMsg: IChatMessage = {
@@ -308,7 +298,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
     } catch (err: unknown) {
-      console.error('Chat API Error Details:', err);
       const errorMessage = processApiError(err);
       dispatch(setError(errorMessage));
     } finally {
