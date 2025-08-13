@@ -21,7 +21,7 @@ import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { ModernLoadingState, ModernErrorState } from '@/components/LoadingStates';
 import Icons from '@/components/Icons';
 import { EmotionalState, CrisisLevel } from '@/providers/seeker/types';
-import { IAIEmotionalAnalysis, IAIPatternAnalysis, IAIRecommendations } from '@/providers/seeker/aiTypes';
+
 
 // Styling constants for consistent design
 const analyticsStyles = {
@@ -241,21 +241,13 @@ export default function AnalyticsPage() {
   const { 
     getRealTimeAnalytics,
     getCrisisPreventionAnalytics,
-    getTherapeuticGoals,
-    getAIEmotionalAnalysis,
-    getAIPatternAnalysis,
-    getAIRecommendations
+    getTherapeuticGoals
   } = useSeekerActions();
   
   const { isAuthenticated, isLoading } = useAuthGuard();
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // #region State Variables: AI Analytics
-  const [aiEmotionalAnalysis, setAiEmotionalAnalysis] = useState<IAIEmotionalAnalysis | null>(null);
-  const [aiPatternAnalysis, setAiPatternAnalysis] = useState<IAIPatternAnalysis | null>(null);
-  const [aiRecommendations, setAiRecommendations] = useState<IAIRecommendations | null>(null);
-  const [aiAnalyticsLoading, setAiAnalyticsLoading] = useState<boolean>(false);
-  // #endregion
+
 
   // Load analytics data
   // #region Hooks
@@ -275,52 +267,21 @@ export default function AnalyticsPage() {
     }
   }, [getRealTimeAnalytics, getCrisisPreventionAnalytics, getTherapeuticGoals]);
 
-  // Load AI Analytics to enhance existing data
-  const loadAIEnhancedData = useCallback(async () => {
-    setAiAnalyticsLoading(true);
-    try {
-      const [patternAnalysis, recommendations] = await Promise.all([
-        getAIPatternAnalysis(30),
-        getAIRecommendations(14)
-      ]);
-      setAiPatternAnalysis(patternAnalysis as IAIPatternAnalysis);
-      setAiRecommendations(recommendations as IAIRecommendations);
-    } catch (error) {
-          // Intentionally left for analytics testing
-          console.error('❌ Failed to load AI enhancements:', error);
-    } finally {
-      setAiAnalyticsLoading(false);
-    }
-  }, [getAIPatternAnalysis, getAIRecommendations]);
+
 
   useEffect(() => {
     if (isLoading) return;
     if (isAuthenticated) {
       loadAnalyticsData();
-      loadAIEnhancedData();
     }
-  }, [isAuthenticated, isLoading, loadAnalyticsData, loadAIEnhancedData]);
+  }, [isAuthenticated, isLoading, loadAnalyticsData]);
   // #endregion
 
-  // AI Emotional Analysis for specific text
-  const analyzeEmotionalText = async (journalText: string) => {
-    if (!journalText?.trim()) return;
-    try {
-      setAiAnalyticsLoading(true);
-      const analysis = await getAIEmotionalAnalysis(journalText);
-      setAiEmotionalAnalysis(analysis as IAIEmotionalAnalysis);
-    } catch (error) {
-          // Intentionally left for analytics testing
-          console.error('❌ Failed to analyze emotional text:', error);
-    } finally {
-      setAiAnalyticsLoading(false);
-    }
-  };
+
 
   // Handle refresh button click
   const handleRefresh = () => {
     loadAnalyticsData();
-    loadAIEnhancedData();
   };
 
   // #region Loading States
@@ -328,7 +289,7 @@ export default function AnalyticsPage() {
     return <ModernLoadingState type="dashboard" message="Loading your analytics dashboard..." />;
   }
 
-  if (realTimeAnalyticsPending || crisisPreventionPending || therapeuticGoalsPending || aiAnalyticsLoading) {
+  if (realTimeAnalyticsPending || crisisPreventionPending || therapeuticGoalsPending) {
     return <ModernLoadingState type="data" message="Preparing your analytics data..." />;
   }
 
@@ -392,54 +353,62 @@ export default function AnalyticsPage() {
                   <div 
                     style={{
                       ...analyticsStyles.emotionalStateDisplay,
-                      background: `linear-gradient(135deg, ${getEmotionalStateColor(realTimeAnalytics.currentEmotionalState)}20 0%, ${getEmotionalStateColor(realTimeAnalytics.currentEmotionalState)}10 100%)`,
-                      border: `2px solid ${getEmotionalStateColor(realTimeAnalytics.currentEmotionalState)}40`,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      border: '2px solid #3b82f6',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)',
                     }}
                   >
                     <div 
                       style={{
                         ...analyticsStyles.metricValue,
-                        color: getEmotionalStateColor(realTimeAnalytics.currentEmotionalState),
+                        color: '#1e293b',
+                        fontWeight: 700,
+                        fontSize: '2rem',
                       }}
                     >
                       {getEmotionalStateLabel(realTimeAnalytics.currentEmotionalState)}
                     </div>
-                    <div style={analyticsStyles.metricLabel}>
+                    <div style={{
+                      ...analyticsStyles.metricLabel,
+                      color: '#475569',
+                      fontWeight: 600,
+                      fontSize: '1.1rem',
+                      opacity: 1
+                    }}>
                       Emotional Assessment
                     </div>
                   </div>
                   
                   <div>
-                    <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>
+                    <h4 style={{ 
+                      marginBottom: '16px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>
                       Recommendations
                     </h4>
                     <ul style={analyticsStyles.insightsList}>
-                      {/* Show AI recommendations if available, otherwise use live recommendations */}
-                      {(aiRecommendations?.immediateActions || realTimeAnalytics.liveRecommendations)?.slice(0, 3).map((recommendation) => (
-                        <li key={`recommendation-${recommendation.slice(0, 20)}`} style={analyticsStyles.recommendationItem}>
+                      {realTimeAnalytics.liveRecommendations?.slice(0, 3).map((recommendation) => (
+                        <li 
+                          key={`recommendation-${recommendation.slice(0, 20)}`} 
+                          style={{
+                            ...analyticsStyles.recommendationItem,
+                            color: '#1e293b',
+                            fontWeight: 500,
+                            fontSize: '1rem',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #3b82f6',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)',
+                          }}
+                        >
                           <Icons.SparkleIcon size="small" />
                           <span>{recommendation}</span>
                         </li>
                       ))}
                     </ul>
                     
-                    {/* Show AI emotional trend if available */}
-                    {aiPatternAnalysis?.trends && (
-                      <div style={{ 
-                        marginTop: '16px',
-                        padding: '12px',
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(99, 102, 241, 0.2)',
-                      }}>
-                        <h5 style={{ fontSize: '0.9rem', color: '#6366f1', marginBottom: '4px' }}>
-                          Emotional Trends:
-                        </h5>
-                        <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
-                          {aiPatternAnalysis.trends}
-                        </p>
-                      </div>
-                    )}
+
                   </div>
                 </>
               ) : (
@@ -460,28 +429,46 @@ export default function AnalyticsPage() {
                   <div 
                     style={{
                       ...analyticsStyles.emotionalStateDisplay,
-                      background: `linear-gradient(135deg, ${getCrisisLevelColor(realTimeAnalytics.immediateRiskLevel)}20 0%, ${getCrisisLevelColor(realTimeAnalytics.immediateRiskLevel)}10 100%)`,
-                      border: `2px solid ${getCrisisLevelColor(realTimeAnalytics.immediateRiskLevel)}40`,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      border: '2px solid #3b82f6',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)',
                     }}
                   >
                     <div 
                       style={{
                         ...analyticsStyles.metricValue,
-                        color: getCrisisLevelColor(realTimeAnalytics.immediateRiskLevel),
+                        color: '#1e293b',
+                        fontWeight: 700,
+                        fontSize: '2rem',
                       }}
                     >
                       {getCrisisLevelLabel(realTimeAnalytics.immediateRiskLevel)}
                     </div>
-                    <div style={analyticsStyles.metricLabel}>
+                    <div style={{
+                      ...analyticsStyles.metricLabel,
+                      color: '#475569',
+                      fontWeight: 600,
+                      fontSize: '1.1rem',
+                      opacity: 1
+                    }}>
                       Current Risk Level
                     </div>
                   </div>
                   
                   <div>
-                    <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>
+                    <h4 style={{ 
+                      marginBottom: '16px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>
                       Monitoring Status: {realTimeAnalytics.monitoringActive ? '🟢 Active' : '⚪ Inactive'}
                     </h4>
-                    <p style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                    <p style={{ 
+                      fontSize: '1rem', 
+                      color: '#1e293b',
+                      fontWeight: 500
+                    }}>
                       Alerts: {realTimeAnalytics.alertsActive ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
@@ -504,10 +491,20 @@ export default function AnalyticsPage() {
               {crisisPreventionAnalytics ? (
                 <div>
                   <div style={{ marginBottom: '24px' }}>
-                    <h4 style={{ marginBottom: '12px', color: '#1e293b' }}>
+                    <h4 style={{ 
+                      marginBottom: '12px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>
                       Prediction Confidence
                     </h4>
-                    <div style={analyticsStyles.progressBar}>
+                    <div style={{
+                      ...analyticsStyles.progressBar,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #3b82f6',
+                      padding: '2px',
+                    }}>
                       <div 
                         style={{
                           ...analyticsStyles.progressFill,
@@ -515,20 +512,46 @@ export default function AnalyticsPage() {
                         }}
                       />
                     </div>
-                    <p style={{ marginTop: '8px', fontSize: '0.9rem', color: '#64748b' }}>
+                    <p style={{ 
+                      marginTop: '8px', 
+                      fontSize: '1rem', 
+                      color: '#1e293b',
+                      fontWeight: 500
+                    }}>
                       {crisisPreventionAnalytics.predictionConfidence.toFixed(1)}% accuracy
                     </p>
                   </div>
                   
                   <div>
-                    <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>Early Warning Signals</h4>
+                    <h4 style={{ 
+                      marginBottom: '16px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>Early Warning Signals</h4>
                     <ul style={analyticsStyles.insightsList}>
                       {crisisPreventionAnalytics.earlyWarningSignals?.slice(0, 3).map((signal, index) => (
-                        <li key={`warning-signal-${index}-${signal.signalType}`} style={analyticsStyles.insightItem}>
+                        <li 
+                          key={`warning-signal-${index}-${signal.signalType}`} 
+                          style={{
+                            ...analyticsStyles.insightItem,
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #3b82f6',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)',
+                          }}
+                        >
                           <Icons.AnalyticsIcon size="small" />
                           <div>
-                            <strong>{signal.signalType}</strong>
-                            <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                            <strong style={{ 
+                              color: '#1e293b',
+                              fontSize: '1.1rem'
+                            }}>{signal.signalType}</strong>
+                            <p style={{ 
+                              fontSize: '1rem', 
+                              color: '#1e293b', 
+                              margin: '4px 0 0 0',
+                              fontWeight: 500
+                            }}>
                               {signal.description}
                             </p>
                           </div>
@@ -557,17 +580,43 @@ export default function AnalyticsPage() {
               {therapeuticGoals ? (
                 <div>
                   <div style={{ marginBottom: '24px' }}>
-                    <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>Short-term Goals</h4>
+                    <h4 style={{ 
+                      marginBottom: '16px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>Short-term Goals</h4>
                     <ul style={analyticsStyles.insightsList}>
                       {therapeuticGoals.shortTermGoals?.slice(0, 2).map((goal: TherapeuticGoal, index: number) => (
-                        <li key={`goal-${index}-${goal.title.replace(/\s+/g, '-')}`} style={analyticsStyles.insightItem}>
+                        <li 
+                          key={`goal-${index}-${goal.title.replace(/\s+/g, '-')}`} 
+                          style={{
+                            ...analyticsStyles.insightItem,
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #3b82f6',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)',
+                          }}
+                        >
                           <Icons.SparkleIcon size="small" />
                           <div>
-                            <strong>{goal.title}</strong>
-                            <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                            <strong style={{
+                              color: '#1e293b',
+                              fontSize: '1.1rem'
+                            }}>{goal.title}</strong>
+                            <p style={{ 
+                              fontSize: '1rem', 
+                              color: '#1e293b', 
+                              margin: '4px 0 0 0',
+                              fontWeight: 500
+                            }}>
                               {goal.description}
                             </p>
-                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                            <p style={{ 
+                              fontSize: '0.9rem', 
+                              color: '#475569', 
+                              margin: '4px 0 0 0',
+                              fontWeight: 500
+                            }}>
                               Priority: {goal.priority}/5 | {goal.estimatedDays} days
                             </p>
                           </div>
@@ -576,40 +625,26 @@ export default function AnalyticsPage() {
                     </ul>
                   </div>
                   
-                  {/* Show AI Weekly Goals if available */}
-                  {aiRecommendations?.weeklyGoals && (
-                    <div style={{ marginBottom: '24px' }}>
-                      <h4 style={{ marginBottom: '16px', color: '#6366f1' }}>
-                        Weekly Recommendations
-                      </h4>
-                      <ul style={analyticsStyles.insightsList}>
-                        {aiRecommendations.weeklyGoals.slice(0, 2).map((goal: string) => (
-                          <li key={`ai-weekly-${goal.slice(0, 20)}`} style={{
-                            ...analyticsStyles.insightItem,
-                            background: 'rgba(99, 102, 241, 0.1)',
-                            border: '1px solid rgba(99, 102, 241, 0.2)',
-                          }}>
-                            <Icons.BrainIcon size="small" />
-                            <span style={{ fontSize: '0.9rem' }}>{goal}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
                   <div>
-                    <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>Recommended Therapies</h4>
+                    <h4 style={{ 
+                      marginBottom: '16px', 
+                      color: '#1e293b',
+                      fontWeight: 600,
+                      fontSize: '1.2rem'
+                    }}>Recommended Therapies</h4>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {therapeuticGoals.recommendedTherapies?.slice(0, 3).map((therapy: string, index: number) => (
                         <span 
                           key={`therapy-${index}-${therapy.replace(/\s+/g, '-')}`}
                           style={{
-                            padding: '6px 12px',
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            padding: '8px 16px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #3b82f6',
                             borderRadius: '16px',
-                            fontSize: '0.9rem',
-                            color: '#3b82f6',
+                            fontSize: '1rem',
+                            color: '#1e293b',
+                            fontWeight: 500,
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)',
                           }}
                         >
                           {therapy}
@@ -647,7 +682,15 @@ export default function AnalyticsPage() {
                       }
                       
                       return (
-                        <li key={`mood-${index}-${fluctuation.timestamp}`} style={analyticsStyles.insightItem}>
+                        <li 
+                          key={`mood-${index}-${fluctuation.timestamp}`} 
+                          style={{
+                            ...analyticsStyles.insightItem,
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #3b82f6',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)',
+                          }}
+                        >
                           <div style={{
                             width: '8px',
                             height: '8px',
@@ -657,11 +700,24 @@ export default function AnalyticsPage() {
                             marginTop: '6px',
                           }} />
                           <div>
-                            <strong>Mood Level: {fluctuation.moodLevel}/10</strong>
-                            <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                            <strong style={{
+                              color: '#1e293b',
+                              fontSize: '1.1rem'
+                            }}>Mood Level: {fluctuation.moodLevel}/10</strong>
+                            <p style={{ 
+                              fontSize: '1rem', 
+                              color: '#1e293b', 
+                              margin: '4px 0 0 0',
+                              fontWeight: 500
+                            }}>
                               {fluctuation.context}
                             </p>
-                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                            <p style={{ 
+                              fontSize: '0.9rem', 
+                              color: '#475569', 
+                              margin: '4px 0 0 0',
+                              fontWeight: 500
+                            }}>
                               {new Date(fluctuation.timestamp).toLocaleDateString()}
                             </p>
                           </div>
@@ -680,127 +736,7 @@ export default function AnalyticsPage() {
 
           </div>
 
-          {/* Instant AI Emotional Analysis Section */}
-          <div style={{
-            ...analyticsStyles.card,
-            marginTop: '32px',
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
-            border: '2px solid rgba(139, 92, 246, 0.2)',
-          }}>
-            <div style={analyticsStyles.cardHeader}>
-              <Icons.BrainIcon />
-              <h2 style={{...analyticsStyles.cardTitle, color: '#8b5cf6'}}>
-                Instant Emotional Analysis
-              </h2>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-              <div>
-                <p style={{ fontSize: '1rem', color: '#64748b', marginBottom: '16px' }}>
-                  Get immediate insights into your emotional state. Write about your current feelings and receive personalized analysis.
-                </p>
-                <textarea
-                  placeholder="Write about how you're feeling right now for instant AI emotional analysis..."
-                  style={{
-                    width: '100%',
-                    minHeight: '120px',
-                    padding: '16px',
-                    border: '2px solid rgba(139, 92, 246, 0.2)',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    resize: 'vertical',
-                    outline: 'none',
-                    marginBottom: '16px',
-                    fontFamily: 'inherit',
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.ctrlKey) {
-                      const target = e.target as HTMLTextAreaElement;
-                      analyzeEmotionalText(target.value);
-                    }
-                  }}
-                  id="instant-emotional-text-input"
-                />
-                <button
-                  onClick={() => {
-                    const input = document.getElementById('instant-emotional-text-input') as HTMLTextAreaElement;
-                    analyzeEmotionalText(input.value);
-                  }}
-                  style={{
-                    ...analyticsStyles.refreshButton,
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                    fontSize: '1rem',
-                    padding: '12px 24px',
-                  }}
-                  disabled={aiAnalyticsLoading}
-                >
-                  {aiAnalyticsLoading ? 'Analyzing...' : 'Analyze'}
-                </button>
-                <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '8px' }}>
-                  Tip: Press Ctrl+Enter to analyze quickly
-                </p>
-              </div>
-              
-              <div>
-                {aiEmotionalAnalysis ? (
-                  <div style={{
-                    padding: '16px',
-                    background: 'rgba(139, 92, 246, 0.1)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
-                  }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#8b5cf6', marginBottom: '12px' }}>
-                      AI Analysis Results
-                    </h4>
-                    <div style={{ marginBottom: '12px' }}>
-                      <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                        Primary Emotion: <span style={{ color: '#8b5cf6' }}>{aiEmotionalAnalysis.primaryEmotion || 'Not detected'}</span>
-                      </p>
-                      <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '4px' }}>
-                        Intensity: {aiEmotionalAnalysis.emotionalIntensity || 'N/A'}/10
-                      </p>
-                      <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '8px' }}>
-                        Risk Level: <span style={{ 
-                          color: (() => {
-                            if (aiEmotionalAnalysis.riskLevel === 'high') return '#dc2626';
-                            if (aiEmotionalAnalysis.riskLevel === 'medium') return '#f59e0b';
-                            return '#10b981';
-                          })()
-                        }}>
-                          {aiEmotionalAnalysis.riskLevel || 'Unknown'}
-                        </span>
-                      </p>
-                    </div>
-                    {aiEmotionalAnalysis.recommendations && aiEmotionalAnalysis.recommendations.length > 0 && (
-                      <div>
-                        <h5 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#8b5cf6', marginBottom: '8px' }}>
-                          AI Recommendations:
-                        </h5>
-                        <ul style={{ fontSize: '0.8rem', color: '#6b7280', margin: 0, paddingLeft: '16px' }}>
-                          {aiEmotionalAnalysis.recommendations.slice(0, 3).map((rec: string) => (
-                            <li key={`instant-rec-${rec.slice(0, 20)}`} style={{ marginBottom: '4px' }}>{rec}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{
-                    padding: '24px',
-                    background: 'rgba(139, 92, 246, 0.05)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(139, 92, 246, 0.1)',
-                    textAlign: 'center',
-                  }}>
-                    <Icons.BrainIcon size="large" />
-                <p style={{ marginTop: '12px', fontSize: '0.9rem', color: '#94a3b8' }}>
-                  Enter your thoughts above and click &quot;Analyze with AI&quot; to get instant emotional insights
-                </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+
 
           {/* Footer with encouragement */}
           <div style={{
@@ -823,27 +759,14 @@ export default function AnalyticsPage() {
             }}>
               <Icons.SparkleIcon /> Your mental health journey is unique and valuable
             </h3>
-            <p style={{
+            <div style={{
               fontSize: '1rem',
               color: '#059669',
               lineHeight: 1.6,
-              marginBottom: '12px',
             }}>
               These insights are designed to help you understand your patterns and support your wellbeing. 
               Remember to reach out for professional support when needed.
-            </p>
-            <p style={{
-              fontSize: '0.9rem',
-              color: '#6366f1',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}>
-              <Icons.BrainIcon size="small" />
-              Insights and support, designed for you
-            </p>
+            </div>
           </div>
         </main>
       </div>

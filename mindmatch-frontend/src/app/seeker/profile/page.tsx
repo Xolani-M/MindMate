@@ -6,6 +6,7 @@ import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useRouter } from 'next/navigation';
 import profileStyles from './profilestyles';
 import { ISeeker } from '@/providers/seeker/types';
+import { ModernLoadingState, ModernErrorState } from '@/components/LoadingStates';
 
 export default function ProfilePage() {
   const { profile, isPending, isError, error } = useSeekerState();
@@ -17,7 +18,6 @@ export default function ProfilePage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackType, setFeedbackType] = useState<'success' | 'error'>('success');
-  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   useEffect(() => {
     // Wait for authentication loading to complete
@@ -28,24 +28,6 @@ export default function ProfilePage() {
       getProfile();
     }
   }, [isAuthenticated, isLoading, getProfile]);
-
-  useEffect(() => {
-    // Check server status
-    const checkServerStatus = async () => {
-      try {
-        const response = await fetch(`https://mindmate-k682.onrender.com/api/services/app/Session/GetCurrentLoginInformations`);
-        if (response.ok) {
-          setServerStatus('online');
-        } else {
-          setServerStatus('offline');
-        }
-      } catch {
-        setServerStatus('offline');
-      }
-    };
-    
-    checkServerStatus();
-  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -62,11 +44,7 @@ export default function ProfilePage() {
 
   // Show loading while session is being restored
   if (isLoading) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        Loading...
-      </div>
-    );
+    return <ModernLoadingState type="dashboard" message="Loading your profile..." />;
   }
 
   const handleInputChange = (field: keyof ISeeker, value: string) => {
@@ -140,36 +118,15 @@ export default function ProfilePage() {
   };
 
   if (isPending) {
-    return (
-      <>
-        <SeekerNavBar />
-        <div style={profileStyles.loading}>
-          Loading your profile...
-        </div>
-      </>
-    );
+    return <ModernLoadingState type="data" message="Preparing your profile data..." />;
   }
 
   if (isError) {
-    return (
-      <>
-        <SeekerNavBar />
-        <div style={profileStyles.error}>
-          {error || 'Failed to load profile'}
-        </div>
-      </>
-    );
+    return <ModernErrorState message={error || 'Failed to load profile'} onRetry={() => getProfile()} />;
   }
 
   if (!profile) {
-    return (
-      <>
-        <SeekerNavBar />
-        <div style={profileStyles.error}>
-          Profile data not available
-        </div>
-      </>
-    );
+    return <ModernErrorState message="Profile data not available" onRetry={() => getProfile()} />;
   }
 
   return (
@@ -206,25 +163,6 @@ export default function ProfilePage() {
               Manage your personal information and emergency contacts
             </div>
             
-            {/* Server Status Indicator */}
-            {serverStatus !== 'checking' && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '8px 16px',
-                borderRadius: 8,
-                background: serverStatus === 'online' ? '#d1fae5' : '#fee2e2',
-                color: serverStatus === 'online' ? '#065f46' : '#991b1b',
-                fontSize: 14,
-                fontWeight: 500,
-                marginBottom: 16,
-              }}>
-                Server Status: {serverStatus === 'online' ? 'Online' : 'Offline - Some features may not work'}
-              </div>
-            )}
-
             {/* Avatar Section */}
             <div style={profileStyles.avatarSection}>
               <div style={profileStyles.avatar}>
