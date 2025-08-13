@@ -18,7 +18,7 @@ export const SeekerReducer = handleActions<ISeekerStateContext, ISeekerStateCont
   }),
   [SeekerActionEnums.getDashboardSuccess]: (state, action) => ({
     ...state,
-    seekerDashboard: (action.payload as unknown) as ISeekerDashboard,
+    seekerDashboard: (action.payload as any).seekerDashboard || (action.payload as unknown as ISeekerDashboard),
     seekerDashboardPending: false,
     seekerDashboardError: null,
   }),

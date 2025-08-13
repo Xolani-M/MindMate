@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuthActions, useAuthState } from '@/providers/authProvider';
 import { Form, Input, Button, Checkbox, Typography, Divider } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import { FloatingElement, GlassCard, GlowButton, PasswordStrength } from '@/components/MindMateComponents';
+import { GlassCard, GlowButton, PasswordStrength } from '@/components/MindMateComponents';
 import { styles } from '@/components/styles';
 import signupStyles from './signupstyles';
 import { SignupError, SignupSuccess } from './SignupFeedback';
@@ -55,8 +55,7 @@ const SignupPage: React.FC = () => {
         }}
       />
 
-      <FloatingElement>
-        <GlassCard style={signupStyles.card as React.CSSProperties}>
+  <GlassCard style={signupStyles.card as React.CSSProperties}>
           {/* Header with MindMate logo */}
           <div style={{ 
             textAlign: 'center', 
@@ -253,8 +252,7 @@ const SignupPage: React.FC = () => {
               ← Back to home
             </Button>
           </div>
-        </GlassCard>
-      </FloatingElement>
+  </GlassCard>
     </div>
   );
 };

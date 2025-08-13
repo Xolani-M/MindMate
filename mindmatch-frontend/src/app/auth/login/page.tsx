@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuthActions, useAuthState } from '@/providers/authProvider';
 import { Form, Input, Button, Checkbox, Typography, Divider } from 'antd';
 import { MailOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
-import { FloatingElement, GlassCard, GlowButton } from '@/components/MindMateComponents';
+import { GlassCard, GlowButton } from '@/components/MindMateComponents';
 import { styles } from '@/components/styles';
 import loginStyles from './loginstyles';
 import { LoginError, LoginSuccess } from './LoginFeedback';
@@ -57,8 +57,7 @@ export default function LoginPage() {
         }}
       />
 
-      <FloatingElement>
-        <GlassCard style={loginStyles.card as React.CSSProperties}>
+  <GlassCard style={loginStyles.card as React.CSSProperties}>
           {/* Header with MindMate logo */}
           <div style={{ 
             textAlign: 'center', 
@@ -264,8 +263,7 @@ export default function LoginPage() {
               ← Back to home
             </Button>
           </div>
-        </GlassCard>
-      </FloatingElement>
+  </GlassCard>
     </div>
   );
 }

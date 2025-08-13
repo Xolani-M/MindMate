@@ -67,6 +67,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
     const endpoint = "/api/services/app/Seeker/GetMyDashboard";
     await axiosInstance.get(endpoint)
       .then((response: { data: { result: unknown } }) => {
+        console.log('🔎 Dashboard API response:', response.data);
         dispatch(getDashboardSuccess(response.data.result as ISeekerDashboard));
       })
       .catch((error) => {

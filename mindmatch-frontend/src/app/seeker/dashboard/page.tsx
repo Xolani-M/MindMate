@@ -28,17 +28,24 @@ export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useAuthGuard();
   const router = useRouter();
 
+  // Debug: Log seekerDashboard before rendering
+  useEffect(() => {
+    console.log('🟢 seekerDashboard state:', seekerDashboard);
+  }, [seekerDashboard]);
+
   // Helper for friendly fallback display
   const friendly = (value: unknown, fallback = <span style={{ color: '#bbb', fontStyle: 'italic' }}>No data</span>) => {
-    if (value === null || value === undefined || value === '' || value === 'N/A') return fallback;
+    // Only treat null, undefined, or empty string as missing
+    if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) return fallback;
     return value as React.ReactNode;
   };
 
   // Extract welcome name
   let welcomeName = '';
-  if (seekerDashboard) {
-    const displayName = seekerDashboard.displayName;
-    const name = seekerDashboard.name;
+  let dashboardData: import('@/providers/seeker/types').ISeekerDashboard = seekerDashboard as any;
+  if (dashboardData) {
+    const displayName = dashboardData.displayName;
+    const name = dashboardData.name;
     welcomeName = displayName || name || 'Seeker';
   }
 
@@ -194,8 +201,11 @@ export default function DashboardPage() {
                 </div>
                 <strong style={{ color: '#059669', fontSize: '1.1rem' }}>Latest Mood</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#065f46' }}>
-                  {friendly(seekerDashboard.latestMood)}
+                  {friendly(dashboardData.latestMood)}
                 </span>
+                <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '6px' }}>
+                  This is your most recent mood score, recorded from your latest daily entry.
+                </div>
               </div>
               
               <div 
@@ -209,10 +219,13 @@ export default function DashboardPage() {
                 <div style={{ marginBottom: '8px' }}>
                   <Icons.AnalyticsIcon />
                 </div>
-                <strong style={{ color: '#1d4ed8', fontSize: '1.1rem' }}>7-Day Average</strong><br />
+                <strong style={{ color: '#1d4ed8', fontSize: '1.1rem' }}>7-Day Mood Average</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#1e40af' }}>
-                  {friendly(seekerDashboard.averageMoodLast7Days)}
+                  {friendly(dashboardData.averageMoodLast7Days)}
                 </span>
+                <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '6px' }}>
+                  This is your average mood score over the past 7 days, based on your daily entries.
+                </div>
               </div>
               
               <div 
@@ -228,8 +241,11 @@ export default function DashboardPage() {
                 </div>
                 <strong style={{ color: '#d97706', fontSize: '1.1rem' }}>Risk Level</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#92400e' }}>
-                  {friendly(seekerDashboard.riskLevel)}
+                  {friendly(dashboardData.riskLevel)}
                 </span>
+                <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '6px' }}>
+                  This reflects your current mental health risk assessment, based on recent data and trends.
+                </div>
               </div>
               
               <div 
@@ -245,7 +261,7 @@ export default function DashboardPage() {
                 </div>
                 <strong style={{ color: '#7c3aed', fontSize: '1.1rem' }}>PHQ-9 Score</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#6b21a8' }}>
-                  {friendly(seekerDashboard.latestPhq9Score)}
+                  {friendly(dashboardData.latestPhq9Score)}
                 </span>
               </div>
               
@@ -262,7 +278,7 @@ export default function DashboardPage() {
                 </div>
                 <strong style={{ color: '#ea580c', fontSize: '1.1rem' }}>GAD-7 Score</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#c2410c' }}>
-                  {friendly(seekerDashboard.latestGad7Score)}
+                  {friendly(dashboardData.latestGad7Score)}
                 </span>
               </div>
               
@@ -279,7 +295,7 @@ export default function DashboardPage() {
                 </div>
                 <strong style={{ color: '#db2777', fontSize: '1.1rem' }}>Journal Entries</strong><br />
                 <span style={{ ...dashboardStyles.value, color: '#be185d' }}>
-                  {friendly(seekerDashboard.totalJournalEntries)}
+                  {friendly(dashboardData.totalJournalEntries)}
                 </span>
               </div>
             </div>
