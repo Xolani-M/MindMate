@@ -6,8 +6,6 @@ import axios from "axios";
  */
 const API_BASE_URL: string = process.env.NEXT_PUBLIC_API || "https://mindmate-k682.onrender.com";
 
-console.log("API Base URL:", API_BASE_URL);
-console.log("Environment:", process.env.NODE_ENV);
 
 /**
  * Configured axios instance for API communication
@@ -33,13 +31,6 @@ axiosInstance.interceptors.request.use(
             const token: string | null = sessionStorage.getItem("token");
             if (token) {
                 config.headers["Authorization"] = `Bearer ${token}`;
-                console.log('🔑 Adding token to request:', {
-                    url: config.url,
-                    hasToken: !!token,
-                    tokenStart: token.substring(0, 20) + '...'
-                });
-            } else {
-                console.log('❌ No token found for request:', config.url);
             }
         }
         return config;

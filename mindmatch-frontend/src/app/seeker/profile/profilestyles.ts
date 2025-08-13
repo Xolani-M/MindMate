@@ -191,6 +191,11 @@ const profileStyles = {
     outline: 'none',
     transition: 'border-color 0.2s',
     background: 'white',
+    color: '#1e293b', // dark text for visibility
+    '::placeholder': {
+      color: '#9ca3af',
+      opacity: 1,
+    },
   },
   formGroup: {
     display: 'flex',

@@ -1,3 +1,13 @@
+/* InfoIcon color variants for dashboard stat cards */
+.dashboard-info-blue {
+  color: #38bdf8;
+}
+.dashboard-info-indigo {
+  color: #6366f1;
+}
+.dashboard-info-yellow {
+  color: #f59e0b;
+}
 /* Modern Dashboard Icons Styles */
 .iconContainer {
   display: inline-flex;

@@ -11,8 +11,18 @@ import {
   Activity,
   Target,
   Award,
-  Smile
+  Smile,
+  Info
 } from 'lucide-react';
+
+export const InfoIcon: React.FC<IconProps> = ({ size = 'medium', className }) => {
+  const iconSize = getIconSize(size);
+  return (
+    <div className={`${styles.iconContainer} ${styles.infoIcon} ${styles[size]} ${className || ''}`}>
+      <Info size={iconSize} />
+    </div>
+  );
+};
 import styles from './Icons.module.css';
 
 interface IconProps {
@@ -151,6 +161,7 @@ const Icons = {
   TargetIcon,
   AwardIcon,
   SmileIcon,
+  InfoIcon,
 };
 
 export default Icons;

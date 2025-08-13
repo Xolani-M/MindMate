@@ -15,21 +15,15 @@ export const useAuthGuard = () => {
     useEffect(() => {
         // Only run on client side
         if (typeof window === 'undefined') return;
-        
         // Wait for session restoration to complete before checking authentication
         if (isSessionLoading) {
-            console.log('🔄 Session still loading, waiting before auth check...');
             return;
         }
-
         // Check if user is authenticated after session restoration is complete
         if (!user?.token && !sessionStorage.getItem('token')) {
-            console.log('❌ No authentication found after session restoration, redirecting to login');
             router.push('/auth/login');
             return;
         }
-
-        console.log('✅ Authentication verified, user can access protected route');
     }, [user, isSessionLoading, router]);
 
     // Only check session storage on client side
