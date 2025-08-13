@@ -11,7 +11,7 @@ export interface ISeeker {
 export interface ISeekerDashboard {
   totalJournalEntries: number;
   latestMood: string | null;
-  averageMoodLast7Days: number;
+  averageMoodLast7Days: string;
   riskLevel: string;
   latestPhq9Score?: number;
   latestGad7Score?: number;
