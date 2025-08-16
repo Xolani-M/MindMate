@@ -1,0 +1,117 @@
+/* Responsive styles for SeekerNavBar */
+.navBar {
+  width: 100%;
+  background: #4f46e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navBrand {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  background: linear-gradient(45deg, #ffffff, #e0e7ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.3);
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navButton {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 20px;
+  margin-left: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter: blur(10px);
+}
+
+.logoutButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 20px;
+  margin-left: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter: blur(10px);
+  min-width: 100px;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  margin-left: 12px;
+}
+
+@media (max-width: 600px) {
+  .navBar {
+    padding: 0 8px;
+    height: 56px;
+  }
+  .navBrand {
+    font-size: 18px;
+  }
+  .navLinks {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    width: 100vw;
+    background: #4f46e5;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    box-shadow: 0 4px 20px rgba(79,70,229,0.15);
+    z-index: 200;
+  }
+  .navLinks.open {
+    display: flex;
+  }
+  .navButton, .logoutButton {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 16px;
+    font-size: 16px;
+    text-align: left;
+    box-shadow: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .logoutButton {
+    border-bottom: none;
+  }
+  .hamburger {
+    display: block;
+  }
+}
