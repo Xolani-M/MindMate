@@ -20,30 +20,11 @@ export const ModernLoadingState: React.FC<LoadingStateProps> = ({
   message,
   className 
 }) => {
-  const getLoadingConfig = () => {
-    switch (type) {
-      case 'dashboard':
-        return {
-          icon: <Icons.WellnessIcon size="large" />,
-          title: 'Loading Your Wellness Hub',
-          message: message || 'Setting up your personalized mental health dashboard...'
-        };
-      case 'data':
-        return {
-          icon: <Icons.AnalyticsIcon size="large" />,
-          title: 'Analyzing Your Progress',
-          message: message || 'Gathering your wellness insights and recent activity...'
-        };
-      default:
-        return {
-          icon: <Icons.SparkleIcon size="large" />,
-          title: 'Loading',
-          message: message || 'Please wait while we prepare everything for you...'
-        };
-    }
+  const config = {
+    icon: <Icons.SparkleIcon size="large" />,
+    title: type === 'dashboard' ? 'Loading Your Wellness Hub' : 'Analyzing Your Progress',
+    message: message || 'Please wait while we prepare everything for you...'
   };
-
-  const config = getLoadingConfig();
 
   return (
     <div className={`${styles.loadingContainer} ${className || ''}`}>
@@ -71,12 +52,7 @@ export const ModernLoadingState: React.FC<LoadingStateProps> = ({
           <div className={styles.loadingBar} />
         </div>
         
-        {/* Animated dots */}
-        <div className={styles.loadingDots}>
-          <div className={styles.loadingDot} />
-          <div className={styles.loadingDot} />
-          <div className={styles.loadingDot} />
-        </div>
+
       </div>
     </div>
   );
