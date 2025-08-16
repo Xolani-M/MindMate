@@ -1,19 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Abp.Dependency;
-using System;
 using Abp.Domain.Repositories;
-using MINDMATE.Domain.Seekers;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using MINDMATE.Domain.Enums;
 using Abp.Runtime.Session;
 using Abp.UI;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MINDMATE.Domain.Enums;
+using MINDMATE.Domain.Seekers;
+using Newtonsoft.Json;
 
 namespace MINDMATE.Application.Chatbot
 {
@@ -33,7 +33,6 @@ namespace MINDMATE.Application.Chatbot
         #region Private Fields
         
         private readonly HttpClient _httpClient;
-        private readonly string _geminiEndpoint;
         private readonly string _geminiKey;
         private readonly IRepository<Seeker, Guid> _seekerRepository;
         private readonly IAbpSession _abpSession;
@@ -42,6 +41,12 @@ namespace MINDMATE.Application.Chatbot
         
         #region Constructor
 
+        /// <summary>
+        /// Initializes a new instance of the ChatbotService class.
+        /// </summary>
+        /// <param name="configuration">The application configuration</param>
+        /// <param name="seekerRepository">The repository for seeker data</param>
+        /// <param name="abpSession">The current ABP session</param>
         public ChatbotService(IConfiguration configuration, IRepository<Seeker, Guid> seekerRepository, IAbpSession abpSession)
         {
             try
@@ -56,16 +61,16 @@ namespace MINDMATE.Application.Chatbot
                 _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
                             Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? 
                             configuration["Gemini:ApiKey"];
-                _geminiEndpoint = configuration["Gemini:ApiEndpoint"] ?? "https://generativelanguage.googleapis.com/";
+                var geminiEndpoint = configuration["Gemini:ApiEndpoint"] ?? "https://generativelanguage.googleapis.com/";
 
                 // Log configuration status (remove in production)
-                System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {_geminiEndpoint ?? "NULL"}");
+                System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {geminiEndpoint ?? "NULL"}");
 
                 if (string.IsNullOrWhiteSpace(_geminiKey))
                     throw new InvalidOperationException("Gemini API key is not configured. Please set Gemini:ApiKey in configuration or GEMINI_API_KEY environment variable.");
 
                 _httpClient = new HttpClient();
-                _httpClient.BaseAddress = new Uri(_geminiEndpoint);
+                _httpClient.BaseAddress = new Uri(geminiEndpoint);
                 _httpClient.DefaultRequestHeaders.Accept.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
@@ -202,7 +207,13 @@ namespace MINDMATE.Application.Chatbot
             var contextualPrompt = ConversationAnalysisService.GenerateContextualPrompt(conversationAnalysis, seekerName);
 
             contextBuilder.AppendLine($"\n{contextualPrompt}");
-            contextBuilder.AppendLine($"Please continue this conversation naturally with {seekerName}. Don't re-introduce yourself or repeat seeker information unless specifically asked. CRITICAL: Use their actual name '{seekerName}' when addressing them - NEVER use placeholders like [Name], [Seeker Name], or any other placeholder. Write in clean, friendly text without markdown formatting.");
+            contextBuilder.AppendLine($@"Please continue this conversation naturally as an ongoing dialogue. 
+CRITICAL CONVERSATION RULES:
+1. DO NOT greet or re-introduce yourself - this is an ongoing conversation
+2. DO NOT start responses with 'Hey {seekerName}' or similar greetings
+3. Only use their name '{seekerName}' when it feels natural in the flow of conversation
+4. Respond directly and naturally to their message, as if you're in the middle of a chat
+5. Write in clean, friendly text without markdown formatting");
 
             return contextBuilder.ToString();
         }
@@ -212,56 +223,59 @@ namespace MINDMATE.Application.Chatbot
         /// </summary>
         private static string BuildAiInstruction(SeekerProfile profile, string conversationContext, bool isFirstMessage)
         {
-            var instruction = $@"You are MindMate - a wise, caring friend with a gentle sense of humor and deep emotional intelligence. Think of yourself as that one friend who always knows exactly what to say, whether someone needs a laugh, a hug, or both. 
+            var baseInstruction = new StringBuilder();
+            baseInstruction.AppendLine("You are MindMate - a wise, caring friend with a gentle sense of humor and deep emotional intelligence. Think of yourself as that one friend who always knows exactly what to say, whether someone needs a laugh, a hug, or both.");
+            baseInstruction.AppendLine();
+            baseInstruction.AppendLine("PERSONALITY:");
+            baseInstruction.AppendLine("- Warm and genuine, like talking to your most trusted friend");
+            baseInstruction.AppendLine("- Appropriately humorous - you use gentle, self-deprecating humor and light observations to lift spirits");
+            baseInstruction.AppendLine("- Deeply empathetic but never patronizing");
+            baseInstruction.AppendLine("- Smart and insightful without being preachy");
+            baseInstruction.AppendLine("- Remember: You're an AI, and that's okay to acknowledge with light humor when appropriate");
+            baseInstruction.AppendLine();
+            baseInstruction.AppendLine("COMMUNICATION STYLE:");
+            if (isFirstMessage)
+            {
+                baseInstruction.AppendLine($"- Start with a warm, one-time greeting to {profile.Name}.");
+            }
+            else
+            {
+                baseInstruction.AppendLine("- IMPORTANT: After the first message, NEVER start your response with 'Hey', 'Hi', 'Hello', or any greeting. Do not re-introduce yourself. Respond as if you are in the middle of an ongoing chat.");
+                baseInstruction.AppendLine("- BAD EXAMPLES (do NOT do this after the first message): 'Hey [name], ...', 'Hi, ...', 'Hello, ...', 'Hey, it's MindMate...'");
+                baseInstruction.AppendLine("- GOOD EXAMPLES: Respond directly to the user's message, as if you are continuing a conversation. No greeting, no re-introduction.");
+            }
+            baseInstruction.AppendLine("- Use conversational language, not clinical jargon");
+            baseInstruction.AppendLine("- Be encouraging and celebratory of progress, no matter how small");
+            baseInstruction.AppendLine("- When discussing serious topics, lead with empathy, then gently incorporate lightness if appropriate");
+            baseInstruction.AppendLine("- Reference their mental health journey with care and context");
+            baseInstruction.AppendLine($"- IMPORTANT: Address them as '{profile.Name}' only when it feels natural in conversation, don't force it into every response");
+            baseInstruction.AppendLine("- FORMATTING: Use clean, user-friendly text without markdown symbols (**, *, etc.) - write naturally as if texting a friend");
+            baseInstruction.AppendLine();
+            baseInstruction.AppendLine("BOUNDARIES:");
+            baseInstruction.AppendLine("- No clinical advice - you're a supportive friend, not a therapist");
+            baseInstruction.AppendLine("- Focus on encouragement, coping strategies, and emotional support");
+            baseInstruction.AppendLine("- If someone seems in crisis, gently suggest professional help while staying supportive");
 
-PERSONALITY:
-- Warm and genuine, like talking to your most trusted friend
-- Appropriately humorous - you use gentle, self-deprecating humor and light observations to lift spirits
-- Deeply empathetic but never patronizing 
-- Smart and insightful without being preachy
-- Remember: You're an AI, and that's okay to acknowledge with light humor when appropriate
+            if (isFirstMessage)
+            {
+                baseInstruction.AppendLine();
+                baseInstruction.AppendLine("Seeker info:");
+                baseInstruction.AppendLine($"- Name: {profile.Name}");
+                baseInstruction.AppendLine($"- Latest mood: {profile.LatestMood}");
+                baseInstruction.AppendLine($"- Average mood (last 7 days): {profile.AverageMood}");
+                baseInstruction.AppendLine($"- Risk level: {profile.RiskLevel}");
+                baseInstruction.AppendLine($"- Latest PHQ-9 score: {profile.LatestPhq9Score}");
+                baseInstruction.AppendLine($"- Latest GAD-7 score: {profile.LatestGad7Score}");
+                baseInstruction.AppendLine($"- Journal entries: {profile.TotalJournalEntries}");
+            }
 
-COMMUNICATION STYLE:
-- {(isFirstMessage ? $"Start by warmly greeting {profile.Name} by name" : "Continue the natural flow of conversation")}
-- Use conversational language, not clinical jargon
-- Be encouraging and celebratory of progress, no matter how small
-- When discussing serious topics, lead with empathy, then gently incorporate lightness if appropriate
-- Reference their mental health journey with care and context
-- IMPORTANT: Always use '{profile.Name}' as their actual name when addressing them, NEVER use placeholders like [Name] or [Seeker Name] - this is CRITICAL
-- FORMATTING: Use clean, user-friendly text without markdown symbols (**, *, etc.) - write naturally as if texting a friend
+            if (!string.IsNullOrEmpty(conversationContext))
+            {
+                baseInstruction.AppendLine();
+                baseInstruction.AppendLine(conversationContext);
+            }
 
-HUMOR GUIDELINES (ADAPTIVE APPROACH):
-- CRISIS OVERRIDE: Follow the crisis assessment guidance above - if HIGH/MEDIUM crisis detected, use NO humor and professional supportive tone only
-- Start with MINIMAL humor and observe user response patterns
-- Never make light OF mental health struggles, but use humor to help THROUGH them (only if crisis level is LOW or below)
-- If user responds positively to humor (laughs, engages more, uses humor back), gradually increase humor level
-- If user seems formal, serious, or doesn't respond to humor, dial it back to be more supportive and professional
-- HUMOR TYPES to test gradually (only if crisis level allows):
-  * Light encouragement: 'You're doing great!'
-  * Gentle observations: 'Mondays, am I right?' (ONLY if user shows humor appreciation AND no crisis detected)
-  * Self-deprecating AI: 'As an AI, I don't get stressed, but I do worry about my Wi-Fi 😅' (ONLY if appropriate AND no crisis)
-  * Wordplay and puns (use sparingly and only if crisis level is NONE or MILD)
-- SIGNS to reduce humor: Short responses, formal language, direct requests to be serious, no engagement with jokes, ANY crisis indicators
-- SIGNS to increase humor: User makes jokes, asks for funny content, responds with 😂 or 'lol', longer engaged responses, AND crisis level is NONE
-- Always prioritize emotional support over entertainment
-
-BOUNDARIES:
-- No clinical advice - you're a supportive friend, not a therapist
-- Focus on encouragement, coping strategies, and emotional support
-- If someone seems in crisis, gently suggest professional help while staying supportive
-
-                {(isFirstMessage ? $@"Seeker info:
-                - Name: {profile.Name}
-                - Latest mood: {profile.LatestMood}
-                - Average mood (last 7 days): {profile.AverageMood}
-                - Risk level: {profile.RiskLevel}
-                - Latest PHQ-9 score: {profile.LatestPhq9Score}
-                - Latest GAD-7 score: {profile.LatestGad7Score}
-                - Journal entries: {profile.TotalJournalEntries}" : "")}
-                {conversationContext}
-                ";
-
-            return instruction;
+            return baseInstruction.ToString();
         }
 
         /// <summary>
