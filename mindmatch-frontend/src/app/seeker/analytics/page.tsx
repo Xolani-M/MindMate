@@ -15,6 +15,7 @@ interface TherapeuticGoal {
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { IAIPatternAnalysis } from '@/providers/seeker/aiTypes';
 import SeekerNavBar from '@/components/SeekerNavBar';
 import { useSeekerState, useSeekerActions } from '@/providers/seeker';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
@@ -228,6 +229,7 @@ const getCrisisLevelLabel = (level: CrisisLevel): string => {
 };
 
 export default function AnalyticsPage() {
+
   const { 
     realTimeAnalytics, 
     crisisPreventionAnalytics,
@@ -237,12 +239,27 @@ export default function AnalyticsPage() {
     crisisPreventionPending,
     therapeuticGoalsPending
   } = useSeekerState();
-  
+
   const { 
     getRealTimeAnalytics,
     getCrisisPreventionAnalytics,
-    getTherapeuticGoals
+    getTherapeuticGoals,
+    getAIPatternAnalysis
   } = useSeekerActions();
+
+  // AI Pattern Analysis State
+  const [aiPatternAnalysis, setAiPatternAnalysis] = useState<IAIPatternAnalysis | null>(null);
+  const [aiPatternLoading, setAiPatternLoading] = useState(false);
+
+  useEffect(() => {
+    setAiPatternLoading(true);
+    getAIPatternAnalysis(30)
+      .then((data) => {
+        console.log('[AI Pattern Analysis] Data:', data);
+        setAiPatternAnalysis(data as IAIPatternAnalysis);
+      })
+      .finally(() => setAiPatternLoading(false));
+  }, [getAIPatternAnalysis]);
   
   const { isAuthenticated, isLoading } = useAuthGuard();
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -338,6 +355,114 @@ export default function AnalyticsPage() {
 
           {/* Real-Time Analytics Grid */}
           <div style={analyticsStyles.grid}>
+            {/* AI Pattern Analysis Card */}
+            <div style={analyticsStyles.card}>
+              <div style={analyticsStyles.cardHeader}>
+                <Icons.BrainIcon />
+                <h2 style={analyticsStyles.cardTitle}>AI Pattern Analysis</h2>
+              </div>
+              {aiPatternLoading ? (
+                <p>Loading AI insights...</p>
+              ) : aiPatternAnalysis ? (
+                <>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: 16 }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 16px',
+                        borderRadius: '16px',
+                        background: aiPatternAnalysis.trend === 'Improving' ? 'linear-gradient(90deg,#10b981,#22d3ee)' : aiPatternAnalysis.trend === 'Declining' ? 'linear-gradient(90deg,#f59e42,#ef4444)' : 'linear-gradient(90deg,#a5b4fc,#818cf8)',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        boxShadow: '0 2px 8px rgba(59,130,246,0.08)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                      }}
+                      title="Overall emotional trend detected by AI (e.g., Improving, Stable, Declining)"
+                    >
+                      <Icons.SparkleIcon size="small" /> {aiPatternAnalysis.trend || 'N/A'}
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 16px',
+                        borderRadius: '16px',
+                        background: 'linear-gradient(90deg,#fbbf24,#f59e42)',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        boxShadow: '0 2px 8px rgba(251,191,36,0.08)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                      }}
+                      title="How confident the AI is in its analysis (0-1 scale)"
+                    >
+                      <Icons.AnalyticsIcon size="small" /> Confidence: {aiPatternAnalysis.confidence ?? 'N/A'}
+                    </span>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '16px 0' }} />
+                  <div style={{ marginBottom: 12 }}>
+                    <strong style={{ color: '#1e293b' }}><Icons.SparkleIcon size="small" /> Patterns</strong>
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {(aiPatternAnalysis.patterns || []).map((pattern, idx) => (
+                        <li key={idx} style={{ marginBottom: 4, color: '#334155', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Icons.BrainIcon size="small" /> {pattern}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <strong style={{ color: '#1e293b' }}><Icons.SparkleIcon size="small" /> Recommendations</strong>
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {(aiPatternAnalysis.recommendations || []).map((rec, idx) => (
+                        <li key={idx} style={{ marginBottom: 4, color: '#059669', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Icons.SparkleIcon size="small" /> {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {aiPatternAnalysis.concernAreas && aiPatternAnalysis.concernAreas.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <strong style={{ color: '#b91c1c' }}><Icons.SecurityIcon size="small" /> Concern Areas</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                        {aiPatternAnalysis.concernAreas.map((area, idx) => (
+                          <span key={idx} style={{ background: '#fee2e2', color: '#b91c1c', borderRadius: 12, padding: '6px 12px', fontSize: '0.95rem', fontWeight: 500 }}>{area}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {aiPatternAnalysis.strengthsIdentified && aiPatternAnalysis.strengthsIdentified.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <strong style={{ color: '#059669' }}><Icons.WellnessIcon size="small" /> Strengths</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                        {aiPatternAnalysis.strengthsIdentified.map((strength, idx) => (
+                          <span key={idx} style={{ background: '#d1fae5', color: '#047857', borderRadius: 12, padding: '6px 12px', fontSize: '0.95rem', fontWeight: 500 }}>{strength}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {aiPatternAnalysis.progressIndicators && aiPatternAnalysis.progressIndicators.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <strong style={{ color: '#2563eb' }}><Icons.AnalyticsIcon size="small" /> Progress Indicators</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                        {aiPatternAnalysis.progressIndicators.map((indicator, idx) => (
+                          <span key={idx} style={{ background: '#dbeafe', color: '#2563eb', borderRadius: 12, padding: '6px 12px', fontSize: '0.95rem', fontWeight: 500 }}>{indicator}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {aiPatternAnalysis.timeBasedPatterns && (
+                    <div style={{ marginBottom: 12 }}>
+                      <strong style={{ color: '#1e293b' }}><Icons.JournalIcon size="small" /> Time-Based Patterns</strong>
+                      <div style={{ marginTop: 6, color: '#334155', fontSize: '1rem' }}>{aiPatternAnalysis.timeBasedPatterns}</div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p>No AI pattern analysis available.</p>
+              )}
+            </div>
             
             {/* Current Emotional State - Enhanced with AI */}
             <div style={analyticsStyles.card}>

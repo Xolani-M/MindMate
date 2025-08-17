@@ -32,6 +32,12 @@ export interface IAIPatternAnalysis {
   recommendations?: string[];
   confidence?: number;
   timestamp: string;
+  // AI-powered advanced fields
+  concernAreas?: string[];
+  strengthsIdentified?: string[];
+  progressIndicators?: string[];
+  timeBasedPatterns?: string;
+  trend?: string;
   rawResponse?: string;
   analysis?: unknown;
   error?: boolean;
