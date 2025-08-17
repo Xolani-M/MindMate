@@ -35,9 +35,21 @@ namespace MINDMATE.Application.Seekers.Analytics
                 _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ??
                             Environment.GetEnvironmentVariable("GEMINI_API_KEY") ??
                             configuration["Gemini:ApiKey"];
-                _geminiEndpoint = Environment.GetEnvironmentVariable("Gemini__ApiEndpoint") ??
-                                 configuration["Gemini:ApiEndpoint"] ??
-                                 "https://generativelanguage.googleapis.com/";
+                var geminiEndpoint = Environment.GetEnvironmentVariable("Gemini__ApiEndpoint") ??
+                                     configuration["Gemini:ApiEndpoint"];
+                if (string.IsNullOrWhiteSpace(geminiEndpoint))
+                {
+                    geminiEndpoint = "https://generativelanguage.googleapis.com/";
+                }
+
+                // Validate the endpoint
+                if (!Uri.TryCreate(geminiEndpoint, UriKind.Absolute, out var baseUri) || (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid Gemini endpoint URI: {geminiEndpoint}. Falling back to default.");
+                    baseUri = new Uri("https://generativelanguage.googleapis.com/");
+                }
+
+                _geminiEndpoint = baseUri.ToString();
 
                 // Log configuration status for debugging
                 var hasKey = !string.IsNullOrWhiteSpace(_geminiKey);
@@ -49,7 +61,6 @@ namespace MINDMATE.Application.Seekers.Analytics
                 }
 
                 // Always set BaseAddress to the base URL (no path)
-                var baseUri = new Uri(_geminiEndpoint);
                 _httpClient.BaseAddress = baseUri;
                 System.Diagnostics.Debug.WriteLine($"HttpClient BaseAddress set to: {baseUri}");
             }
@@ -100,6 +111,10 @@ namespace MINDMATE.Application.Seekers.Analytics
 
                 var prompt = CreatePatternAnalysisPrompt(journalEntries);
                 var response = await CallGeminiApiAsync(prompt);
+
+                // Log the raw Gemini AI response for debugging
+                System.Diagnostics.Debug.WriteLine($"[GeminiAnalyticsService] Raw Gemini AI response: {response}");
+
                 return ParsePatternAnalysisResponse(response);
             }
             catch (Exception ex)
@@ -339,19 +354,30 @@ Base recommendations on evidence-based therapeutic practices and individual patt
             try
             {
                 var cleanJson = ExtractJsonFromResponse(response);
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Raw Pattern Analysis JSON: {cleanJson}");
                 var analysis = JsonSerializer.Deserialize<JsonElement>(cleanJson);
 
+                var emotionalTrend = GetStringProperty(analysis, "emotionalTrend");
                 return new GeminiPatternAnalysisDto
                 {
-                    KeyInsights = GetStringArrayProperty(analysis, "patterns"),
-                    RecommendedInterventions = GetStringArrayProperty(analysis, "recommendations"),
-                    PatternConfidence = GetDoubleProperty(analysis, "confidence"),
-                    AnalyzedEntriesCount = GetIntProperty(analysis, "entryCount"),
-                    AnalysisTimestamp = DateTime.UtcNow
+                    KeyInsights = GetStringArrayProperty(analysis, "recurringThemes"),
+                    RecommendedInterventions = GetStringArrayProperty(analysis, "recommendedInterventions"),
+                    PatternConfidence = GetDoubleProperty(analysis, "confidenceScore"),
+                    Trend = emotionalTrend,
+                    ConcernAreas = GetStringArrayProperty(analysis, "concernAreas"),
+                    StrengthsIdentified = GetStringArrayProperty(analysis, "strengthsIdentified"),
+                    ProgressIndicators = GetStringArrayProperty(analysis, "progressIndicators"),
+                    TimeBasedPatterns = GetStringProperty(analysis, "timeBasedPatterns"),
+                    AnalyzedEntriesCount = 0,
+                    AnalysisTimestamp = DateTime.UtcNow,
+                    ProgressTrend = new ProgressTrendDto {
+                        OverallTrend = emotionalTrend
+                    }
                 };
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[GeminiAI] Pattern Analysis Parsing Error: {ex}");
                 return new GeminiPatternAnalysisDto
                 {
                     KeyInsights = new List<string> { "AI analysis unavailable" },

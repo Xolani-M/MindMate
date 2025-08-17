@@ -113,6 +113,30 @@ namespace MINDMATE.Application.Seekers.Analytics.Dto
     /// </summary>
     public class GeminiPatternAnalysisDto
     {
+    /// <summary>
+    /// Overall emotional trend detected by AI (e.g., Improving, Stable, Declining)
+    /// </summary>
+    public string Trend { get; set; }
+
+    /// <summary>
+    /// Areas of concern identified by AI (e.g., anxiety, stress triggers)
+    /// </summary>
+    public List<string> ConcernAreas { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Personal strengths identified by AI (e.g., resilience, self-awareness)
+    /// </summary>
+    public List<string> StrengthsIdentified { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Progress indicators and positive changes detected by AI
+    /// </summary>
+    public List<string> ProgressIndicators { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Time-based patterns or trends (e.g., mood changes by day of week)
+    /// </summary>
+    public string TimeBasedPatterns { get; set; }
         public List<EmotionalPatternDto> EmotionalPatterns { get; set; } = new List<EmotionalPatternDto>();
         public List<BehavioralPatternDto> BehavioralPatterns { get; set; } = new List<BehavioralPatternDto>();
         public List<TriggerPatternDto> TriggerPatterns { get; set; } = new List<TriggerPatternDto>();

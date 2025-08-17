@@ -307,7 +307,7 @@ namespace MINDMATE.Application.Seekers.Analytics
                     analyzedDays = days,
                     entryCount = journalEntries.Count,
                     patterns = patternAnalysis.KeyInsights,
-                    trends = patternAnalysis.ProgressTrend?.OverallTrend,
+                    trend = patternAnalysis.ProgressTrend?.OverallTrend,
                     recommendations = patternAnalysis.RecommendedInterventions,
                     confidence = patternAnalysis.PatternConfidence,
                     timestamp = patternAnalysis.AnalysisTimestamp.ToString("o")

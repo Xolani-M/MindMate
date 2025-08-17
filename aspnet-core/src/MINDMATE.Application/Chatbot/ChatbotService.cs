@@ -53,24 +53,35 @@ namespace MINDMATE.Application.Chatbot
             {
                 _seekerRepository = seekerRepository ?? throw new ArgumentNullException(nameof(seekerRepository));
                 _abpSession = abpSession ?? throw new ArgumentNullException(nameof(abpSession));
-                
+
                 if (configuration == null)
                     throw new ArgumentNullException(nameof(configuration));
 
                 // Try environment variables first (Render uses Gemini__ApiKey), then configuration
-                _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ?? 
-                            Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? 
+                _geminiKey = Environment.GetEnvironmentVariable("Gemini__ApiKey") ??
+                            Environment.GetEnvironmentVariable("GEMINI_API_KEY") ??
                             configuration["Gemini:ApiKey"];
-                var geminiEndpoint = configuration["Gemini:ApiEndpoint"] ?? "https://generativelanguage.googleapis.com/";
+                var geminiEndpoint = configuration["Gemini:ApiEndpoint"];
+                if (string.IsNullOrWhiteSpace(geminiEndpoint))
+                {
+                    geminiEndpoint = "https://generativelanguage.googleapis.com/";
+                }
+
+                // Validate the endpoint
+                if (!Uri.TryCreate(geminiEndpoint, UriKind.Absolute, out var baseUri) || (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid Gemini endpoint URI: {geminiEndpoint}. Falling back to default.");
+                    baseUri = new Uri("https://generativelanguage.googleapis.com/");
+                }
 
                 // Log configuration status (remove in production)
-                System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {geminiEndpoint ?? "NULL"}");
+                System.Diagnostics.Debug.WriteLine($"ChatbotService Init - Gemini Key: {(_geminiKey != null ? "SET" : "NULL")}, Endpoint: {baseUri}");
 
                 if (string.IsNullOrWhiteSpace(_geminiKey))
                     throw new InvalidOperationException("Gemini API key is not configured. Please set Gemini:ApiKey in configuration or GEMINI_API_KEY environment variable.");
 
                 _httpClient = new HttpClient();
-                _httpClient.BaseAddress = new Uri(geminiEndpoint);
+                _httpClient.BaseAddress = baseUri;
                 _httpClient.DefaultRequestHeaders.Accept.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }

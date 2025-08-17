@@ -164,25 +164,6 @@ namespace MINDMATE.Application.Seekers
         }
 
         /// <summary>
-        /// Test method to seed demo data and check dashboard
-        /// </summary>
-        [AbpAuthorize]
-        public async Task<string> TestDashboardDataAsync()
-        {
-            try
-            {
-                // Get current dashboard data before seeding
-                var dashboardBefore = await GetMyDashboardAsync();
-                
-                return $"Dashboard data - Journals: {dashboardBefore.TotalJournalEntries}, Latest Mood: {dashboardBefore.LatestMood}, 7-Day Avg: {dashboardBefore.AverageMoodLast7Days}, Risk: {dashboardBefore.RiskLevel}, PHQ9: {dashboardBefore.LatestPhq9Score}, GAD7: {dashboardBefore.LatestGad7Score}";
-            }
-            catch (Exception ex)
-            {
-                return $"Error: {ex.Message}";
-            }
-        }
-
-        /// <summary>
         /// Get seeker profile for the current user
         /// </summary>
         public async Task<SeekerDto> GetMyProfileAsync()
