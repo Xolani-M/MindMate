@@ -158,8 +158,7 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
       const result = response.data?.result || {};
       // Normalize: always provide only 'trend', never 'trends'
   const trend = result.trend ?? result.trends ?? null;
-  // Remove 'trends' if present
-  const { trends: _unused, ...rest } = result;
+  const { trends, ...rest } = result;
   return { ...rest, trend };
     } catch (error: unknown) {
       throw error;

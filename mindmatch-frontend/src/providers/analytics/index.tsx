@@ -93,7 +93,7 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
 	};
 
 	// Memoize actions to avoid recreating object on every render
-	const actions = useMemo(() => ({ getAnalytics, refreshAnalytics }), []);
+		const actions = useMemo(() => ({ getAnalytics, refreshAnalytics }), [refreshAnalytics]);
 
 	return (
 		<AnalyticsStateContext.Provider value={state}>

@@ -251,11 +251,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       text,
       createdAt: new Date().toISOString(),
     };
-    
     dispatch(sendMessage(userMsg));
     dispatch(setLoading(true));
     dispatch(setError()); // Clear any previous errors
-    
+
     try {
       // Build conversation history from recent messages (excluding the current user message)
       // Send last 50 messages for better context (approximately 10,000-15,000 tokens)
@@ -264,14 +263,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         Message: msg.text,
         Timestamp: new Date(msg.createdAt)
       }));
-      
+
       // Force the correct format with explicit property name and conversation history
       const requestPayload = {
         "Message": text.trim(),
         "ConversationHistory": recentHistory
       };
-      
-      
+
       const res = await axiosInstance.post(
         "/api/services/app/Chat/GetChatbotReply",
         requestPayload,
@@ -281,7 +279,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
       );
-
 
       if (res.data.success && res.data.result?.reply) {
         const botMsg: IChatMessage = {
@@ -296,14 +293,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         const errorMsg = res.data.error?.message || "Chatbot service returned an unexpected response.";
         dispatch(setError(errorMsg));
       }
-      
+
     } catch (err: unknown) {
       const errorMessage = processApiError(err);
       dispatch(setError(errorMessage));
     } finally {
       dispatch(setLoading(false));
     }
-  }, []);
+  }, [state.messages]);
 
   /**
    * Clears the current error state

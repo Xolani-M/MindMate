@@ -15,8 +15,8 @@ export default function AnalyticsPage() {
         <div className={styles.title}>Coming Soon</div>
         <div className={styles.subtitle}>Analytics Dashboard</div>
         <div className={styles.description}>
-          We're crafting a beautiful analytics experience for you.<br />
-          Soon you'll be able to visualize your progress, discover insights, and track your journey with MindMate.
+          We&apos;re crafting a beautiful analytics experience for you.<br />
+          Soon you&apos;ll be able to visualize your progress, discover insights, and track your journey with MindMate.
         </div>
       </div>
     </>
