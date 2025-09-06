@@ -21,6 +21,7 @@ using MINDMATE.Application.EmailService;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 
 
 namespace MINDMATE.Web.Host.Startup
