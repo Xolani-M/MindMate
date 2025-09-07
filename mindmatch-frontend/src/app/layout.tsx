@@ -6,7 +6,6 @@ import { SeekerProvider } from "@/providers/seeker";
 import { AssessmentProvider } from "@/providers/assessment";
 import { JournalProvider } from "@/providers/journal";
 import { MoodProvider } from "@/providers/mood";
-import { ChatProvider } from "@/providers/chat";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,9 +37,7 @@ export default function RootLayout({
             <AssessmentProvider>
               <JournalProvider>
                 <MoodProvider>
-                  <ChatProvider>
-                    {children}
-                  </ChatProvider>
+                  {children}
                 </MoodProvider>
               </JournalProvider>
             </AssessmentProvider>
