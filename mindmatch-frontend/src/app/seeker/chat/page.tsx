@@ -8,46 +8,15 @@ import ChatPageComponent from "@/components/ChatPage";
 function ChatPage() {
   const { isAuthenticated, isLoading, user } = useAuthGuard();
 
-  // Show loading while session is being restored
-  if (isLoading) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "18px",
-        color: "#666"
-      }}>
-        Loading...
-      </div>
-    );
+  // Redirect to login if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    window.location.href = '/auth/login';
+    return null;
   }
 
-  // Show loading while checking authentication
-  if (!isAuthenticated) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f8fafc",
-      }}>
-        <div style={{
-          background: "#fff",
-          borderRadius: 16,
-          padding: "32px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          textAlign: "center",
-          color: "#6366f1",
-          fontSize: "16px",
-          fontWeight: 500,
-        }}>
-          Checking authentication...
-        </div>
-      </div>
-    );
+  // Show nothing while loading, let ChatProvider handle the loading state
+  if (isLoading) {
+    return null;
   }
 
   return (
@@ -55,7 +24,6 @@ function ChatPage() {
       <SeekerNavBar />
       <div style={{ flex: 1, minHeight: 0 }}>
         <ChatPageComponent 
-          userToken={user?.token}
           userName={user?.name || user?.displayName}
         />
       </div>

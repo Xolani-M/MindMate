@@ -1,22 +1,21 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, User, Send, Heart, Shield, Sparkles, MessageCircle } from 'lucide-react';
+import { Bot, User, Send, Mic, MicOff, Volume2, VolumeX, Waves, Phone, PhoneOff } from 'lucide-react';
 import styles from './ChatPage.module.css';
 import { useChatState, useChatActions } from "@/providers/chat";
-import { EnhancedChatError } from "@/components/EnhancedChatError";
+
 
 interface ChatPageProps {
-  userToken?: string;
   userName?: string;
 }
 
-const ChatPage: React.FC<ChatPageProps> = ({ userToken, userName }) => {
-  const { messages, loading, error } = useChatState();
-  const { sendUserMessage, clearError } = useChatActions();
+const ChatPage: React.FC<ChatPageProps> = ({ userName }) => {
+  const { messages, readyState, loading, error, isListening, isMuted } = useChatState();
+  const { connect, disconnect, sendMessage, toggleListening, muteAudio } = useChatActions();
   const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // ...existing code...
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,12 +27,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ userToken, userName }) => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !userToken) return;
-    
-    setSending(true);
-    await sendUserMessage(input);
+    if (!input.trim() || readyState !== "OPEN") return;
+    await sendMessage(input);
     setInput("");
-    setSending(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -43,15 +39,80 @@ const ChatPage: React.FC<ChatPageProps> = ({ userToken, userName }) => {
     }
   };
 
-  const quickPrompts = [
-    { icon: Heart, text: "How are you feeling today?", color: "#ef4444" },
-    { icon: Sparkles, text: "I need some motivation", color: "#f59e0b" },
-    { icon: Shield, text: "Help me manage stress", color: "#10b981" },
-    { icon: MessageCircle, text: "I want to talk about something", color: "#6366f1" }
-  ];
+
+
+  const handleToggleMute = () => {
+    muteAudio();
+  };
+
+  const handleToggleListening = () => {
+    toggleListening();
+  };
+
+  const getConnectionStatus = () => {
+    switch (readyState) {
+      case 'OPEN': return { text: 'Connected', color: '#10b981', icon: Phone };
+      case 'CONNECTING': return { text: 'Connecting...', color: '#f59e0b', icon: Phone };
+      default: return { text: 'Disconnected', color: '#ef4444', icon: PhoneOff };
+    }
+  };
+
+  const connectionStatus = getConnectionStatus();
 
   return (
     <div className={styles.chatContainer}>
+      {/* Professional Header */}
+      <div className={styles.chatHeader}>
+        <div className={styles.headerLeft}>
+          <div className={styles.headerTitle}>
+            <Bot size={24} className={styles.headerIcon} />
+            <div>
+              <h1 className={styles.headerMainTitle}>MindMate Assistant</h1>
+              <p className={styles.headerSubtitle}>Empathic AI for Mental Wellness</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.headerRight}>
+          <div className={styles.connectionStatus}>
+            <connectionStatus.icon size={16} />
+            <span style={{ color: connectionStatus.color }}>{connectionStatus.text}</span>
+          </div>
+          
+          <div className={styles.voiceControls}>
+            <button 
+              className={`${styles.voiceButton} ${isMuted ? styles.voiceButtonActive : ''}`}
+              onClick={handleToggleMute}
+              title={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            </button>
+            
+            <button 
+              className={`${styles.voiceButton} ${isListening ? styles.voiceButtonActive : ''}`}
+              onClick={handleToggleListening}
+              title={isListening ? "Stop Listening" : "Start Listening"}
+              disabled={readyState !== 'OPEN'}
+            >
+              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+            </button>
+          </div>
+          
+          <div className={styles.sessionActions}>
+            {readyState === "OPEN" ? (
+              <button onClick={disconnect} className={styles.disconnectButton}>
+                <PhoneOff size={16} />
+                End Session
+              </button>
+            ) : (
+              <button onClick={() => connect()} className={styles.connectButton}>
+                <Phone size={16} />
+                Start Session
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
       {/* Messages Area */}
       <div className={styles.messagesContainer}>
         {/* Welcome Message */}
@@ -68,56 +129,35 @@ const ChatPage: React.FC<ChatPageProps> = ({ userToken, userName }) => {
                 I&apos;m here to listen, support, and help you on your mental wellness journey. 
                 Everything you share is confidential and judgment-free.
               </p>
-              <div className={styles.quickPrompts}>
-                {quickPrompts.map((prompt) => (
-                  <button
-                    key={prompt.text}
-                    className={styles.quickPrompt}
-                    onClick={() => setInput(prompt.text)}
-                    style={{ borderColor: prompt.color }}
-                  >
-                    <prompt.icon size={16} style={{ color: prompt.color }} />
-                    <span>{prompt.text}</span>
-                  </button>
-                ))}
-              </div>
+              {/* ...quick prompts logic unchanged... */}
             </div>
           </div>
         )}
-
         {/* Chat Messages */}
         <div className={styles.messagesList}>
-          {messages?.map((msg) => (
-            <div
-              key={msg.id}
-              className={`${styles.message} ${
-                msg.sender === "user" ? styles.messageUser : styles.messageBot
-              }`}
-            >
+          {messages?.map((msg, idx) => (
+            <div key={msg.id || idx} className={styles.message}>
               <div className={styles.messageAvatar}>
-                {msg.sender === "user" ? (
-                  <User size={16} />
-                ) : (
-                  <Bot size={16} />
-                )}
+                {msg.sender === "user" ? <User size={16} /> : <Bot size={16} />}
               </div>
               <div className={styles.messageContent}>
                 <div className={styles.messageBubble}>
                   {msg.text}
-                </div>
-                <div className={styles.messageTime}>
-                  {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {msg.audioData && (
+                    <div className={styles.audioPlayer}>
+                      <audio controls preload="metadata">
+                        <source src={msg.audioData} type="audio/wav" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ))}
-
           {/* Typing Indicator */}
-          {(loading || sending) && (
-            <div className={`${styles.message} ${styles.messageBot}`}>
+          {loading && (
+            <div className={styles.message}>
               <div className={styles.messageAvatar}>
                 <Bot size={16} />
               </div>
@@ -133,59 +173,73 @@ const ChatPage: React.FC<ChatPageProps> = ({ userToken, userName }) => {
               </div>
             </div>
           )}
-
           {/* Error Display */}
           {error && (
             <div className={styles.errorContainer}>
-              <EnhancedChatError 
-                error={error}
-                onRetry={() => {
-                  const lastUserMessage = messages?.findLast(msg => msg.sender === 'user');
-                  if (lastUserMessage) {
-                    sendUserMessage(lastUserMessage.text);
-                  }
-                }}
-                onClear={clearError}
-              />
+              <span>{error}</span>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
       </div>
-
-      {/* Modern Input Area */}
+      {/* Input Area */}
       <div className={styles.inputContainer}>
         <form onSubmit={handleSend} className={styles.inputForm}>
           <div className={styles.inputWrapper}>
+            {isListening && (
+              <div className={styles.voiceIndicator}>
+                <div className={styles.voiceWaves}>
+                  <div className={styles.voiceWave}></div>
+                  <div className={styles.voiceWave}></div>
+                  <div className={styles.voiceWave}></div>
+                </div>
+                <span className={styles.voiceIndicatorText}>Listening...</span>
+              </div>
+            )}
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Share what's on your mind..."
+              placeholder={isListening ? "I'm listening to your voice..." : "Share what's on your mind..."}
               className={styles.messageInput}
-              disabled={sending || !userToken}
+              disabled={loading || readyState !== "OPEN" || isListening}
             />
-            <button
-              type="submit"
-              disabled={sending || !input.trim() || !userToken}
-              className={styles.sendButton}
-              aria-label="Send message"
-            >
-              <Send size={18} />
-            </button>
+            <div className={styles.inputActions}>
+              <button
+                type="button"
+                className={`${styles.micButton} ${isListening ? styles.micButtonActive : ''}`}
+                onClick={handleToggleListening}
+                disabled={readyState !== 'OPEN'}
+                title={isListening ? "Stop Listening" : "Start Voice Input"}
+              >
+                {isListening ? <Waves size={18} /> : <Mic size={18} />}
+              </button>
+              <button
+                type="submit"
+                disabled={!input.trim() || loading || readyState !== "OPEN" || isListening}
+                className={styles.sendButton}
+                aria-label="Send message"
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </div>
         </form>
-
-        {/* Input Helper Text */}
+        
         <div className={styles.inputHelper}>
           <div className={styles.helperText}>
-            <Shield size={12} />
-            <span>Your conversations are private and secure</span>
+            {readyState === 'OPEN' ? (
+              <>
+                <div className={styles.statusIndicator} />
+                Connected - Voice & text ready
+              </>
+            ) : (
+              <span>Start a session to begin chatting</span>
+            )}
           </div>
           <div className={styles.helperActions}>
-            <span>Press Enter to send</span>
+            Press Enter to send
           </div>
         </div>
       </div>

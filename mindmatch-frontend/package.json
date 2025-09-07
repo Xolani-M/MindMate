@@ -11,11 +11,13 @@
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@heroicons/react": "^2.2.0",
+    "@humeai/voice-react": "^0.2.3",
     "@types/antd": "^1.0.4",
     "@types/redux": "^3.6.31",
     "antd": "^5.26.7",
     "axios": "^1.11.0",
     "framer-motion": "^12.23.12",
+    "hume": "^0.13.3",
     "i": "^0.3.7",
     "install": "^0.13.0",
     "jsonwebtoken": "^9.0.2",

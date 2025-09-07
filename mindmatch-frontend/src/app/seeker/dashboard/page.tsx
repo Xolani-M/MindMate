@@ -87,7 +87,7 @@ export default function DashboardPage() {
   // #endregion
 
   return (
-    <ChatProvider>
+    <>
       <SeekerNavBar />
       <div style={dashboardStyles.container}>
         {/* Decorative floating orbs for ambiance */}
@@ -368,8 +368,10 @@ export default function DashboardPage() {
       </div>
       
       {/* Modern Chat Widget - positioned in bottom corner */}
-      <ChatWidget />
-    </ChatProvider>
+      <ChatProvider>
+        <ChatWidget />
+      </ChatProvider>
+    </>
   );
 }
 // #endregion

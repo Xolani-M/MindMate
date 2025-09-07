@@ -1,46 +1,27 @@
 
-/**
- "use client";
-import React, { useReducer, useContext, useMemo, useCallback } from "react";
-import { axiosInstance } from "@/utils/axiosInstance";
+
+"use client";
+import React, { useContext, useMemo, useCallback, useState, useEffect } from "react";
+import { VoiceProvider, useVoice } from "@humeai/voice-react";
 import { v4 as uuidv4 } from "uuid";
 import { IChatMessage } from "./types";
-import { ChatStateContext, ChatActionContext } from "./context";
-import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
-import { chatReducer, initialChatState } from "./reducer";verview Chat Provider for MindMate chatbot functionality
+import { ModernLoadingState } from "@/components/LoadingStates/LoadingStates";
+import { ChatStateContext, ChatActionContext, ChatProviderContext } from "./context";
+import { axiosInstance } from "@/utils/axiosInstance";
+/**
+ * Chat Provider for MindMate chatbot functionality
  * @description Manages chat state and handles communication with the chatbot API
  * @author MindMate Development Team
  * @version 1.0.0
  */
-
-"use client";
-import React, { useReducer, useContext, useMemo, useCallback } from "react";
-import { axiosInstance } from "@/utils/axiosInstance";
-import { v4 as uuidv4 } from "uuid";
-import { IChatMessage } from "./types";
-import { ChatStateContext, ChatActionContext } from "./context";
-import { sendMessage, receiveMessage, setLoading, setError } from "./actions";
-import { chatReducer, initialChatState } from "./reducer";
 
 //#region Type Definitions
 
 /**
  * Axios error type for better error handling
  */
-interface IAxiosError {
-  response: {
-    status: number;
-    data?: {
-      error?: { message?: string };
-      success?: boolean;
-      result?: Record<string, unknown>;
-    };
-  };
-  request?: Record<string, unknown>;
-  message?: string;
-}
 
-//#endregion Type Definitions
+//endregion Type Definitions
 
 //#region Utility Functions
 
@@ -137,9 +118,7 @@ const clearAllChatHistory = (): void => {
  * @param error - The error to check
  * @returns Whether the error is an Axios error
  */
-const isAxiosError = (error: unknown): error is IAxiosError => {
-  return typeof error === 'object' && error !== null && 'response' in error;
-};
+
 
 /**
  * Processes API error and returns user-friendly message
@@ -147,191 +126,213 @@ const isAxiosError = (error: unknown): error is IAxiosError => {
  * @param err - The error object from the API call
  * @returns User-friendly error message
  */
-const processApiError = (err: unknown): string => {
-  if (isAxiosError(err)) {
-    
-    const { status, data } = err.response;
-    
-    switch (status) {
-      case 500:
-        if (data?.success === false && data?.error?.message) {
-          return data.error.message.includes("internal error")
-            ? "The chatbot service is experiencing technical difficulties. Our team has been notified. Please try again in a few moments."
-            : `Chatbot service error: ${data.error.message}`;
-        }
-        return "The chatbot service is temporarily unavailable. Please try again later.";
-      
-      case 401:
-        return "Your session has expired. Please log in again to use the chatbot.";
-      
-      case 400:
-        return "Invalid message format. Please try a different message.";
-      
-      case 403:
-        return "You don't have permission to access the chatbot. Please contact support.";
-      
-      default:
-        return data?.error?.message || `Server error (${status}). Please try again.`;
-    }
-  }
-  
-  if (err instanceof Error) {
-    return `Connection error: ${err.message}. Please check your internet connection.`;
-  }
-  
-  return "An unexpected error occurred. Please try again.";
-};
+
 
 //#endregion Utility Functions
 
-export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  // Initialize state with saved chat history
-  const [state, dispatch] = useReducer(chatReducer, {
-    ...initialChatState,
-    messages: loadChatHistory()
-  });
+const InnerChatProvider = ({ children, accessToken }: { children: React.ReactNode; accessToken: string }) => {
+  const { 
+    messages: voiceMessages, 
+    connect, 
+    disconnect, 
+    status,
+    sendUserInput,
+    error: voiceError,
+    isMuted,
+    isPlaying,
+    mute,
+    unmute
+  } = useVoice();
+  
+  const [messages, setMessages] = useState<IChatMessage[]>(loadChatHistory());
+  const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
 
-  // Track current user for auth changes
-  const [currentUserToken, setCurrentUserToken] = React.useState<string | null>(null);
 
-  // Initialize user token on mount
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setCurrentUserToken(sessionStorage.getItem('token'));
-    }
-  }, []);
-
-  // Monitor auth changes and clear chat on logout
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const checkAuthChanges = () => {
-      const token = sessionStorage.getItem('token');
-      
-      // If user was logged in but now has no token (logged out)
-      if (currentUserToken && !token) {
-  // Debug log removed for production cleanliness
-        dispatch({ type: 'CLEAR_HISTORY' });
-        clearAllChatHistory();
-      }
-      
-      // Update current token reference
-      setCurrentUserToken(token);
-    };
-
-    // Check auth changes periodically
-    const interval = setInterval(checkAuthChanges, 1000);
-    
-    // Also check on storage events (for multi-tab logout)
-    window.addEventListener('storage', checkAuthChanges);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', checkAuthChanges);
-    };
-  }, [currentUserToken]);
-
-  // Save chat history whenever messages change
-  React.useEffect(() => {
-    saveChatHistory(state.messages);
-  }, [state.messages]);
-
-  //#region Event Handlers
-
-  /**
-   * Sends a user message to the chatbot and handles the response
-   * 
-   * @param text - The message text to send
-   */
-  const sendUserMessage = useCallback(async (text: string): Promise<void> => {
-    // Create and dispatch user message
-    const userMsg: IChatMessage = {
-      id: uuidv4(),
-      sender: "user",
-      text,
-      createdAt: new Date().toISOString(),
-    };
-    dispatch(sendMessage(userMsg));
-    dispatch(setLoading(true));
-    dispatch(setError()); // Clear any previous errors
-
-    try {
-      // Build conversation history from recent messages (excluding the current user message)
-      // Send last 50 messages for better context (approximately 10,000-15,000 tokens)
-      const recentHistory = state.messages.slice(-50).map(msg => ({
-        Sender: msg.sender,
-        Message: msg.text,
-        Timestamp: new Date(msg.createdAt)
-      }));
-
-      // Force the correct format with explicit property name and conversation history
-      const requestPayload = {
-        "Message": text.trim(),
-        "ConversationHistory": recentHistory
-      };
-
-      const res = await axiosInstance.post(
-        "/api/services/app/Chat/GetChatbotReply",
-        requestPayload,
-        {
-          headers: {
-            'Content-Type': 'application/json'
+  // Convert Hume voice messages to our chat format
+  useEffect(() => {
+    const chatMessages: IChatMessage[] = voiceMessages
+      .filter(msg => msg.type === 'user_message' || msg.type === 'assistant_message')
+      .map(msg => {
+        let text = '';
+        if ('message' in msg && msg.message) {
+          if (typeof msg.message === 'string') {
+            text = msg.message;
+          } else if (typeof msg.message === 'object' && 'content' in msg.message) {
+            text = msg.message.content || '';
           }
         }
-      );
-
-      if (res.data.success && res.data.result?.reply) {
-        const botMsg: IChatMessage = {
+        
+        let audioData = undefined;
+        if (msg.type === 'assistant_message' && 'audio' in msg && msg.audio) {
+          if (typeof msg.audio === 'object' && 'url' in msg.audio && typeof msg.audio.url === 'string') {
+            audioData = msg.audio.url;
+          } else if (typeof msg.audio === 'string') {
+            audioData = msg.audio;
+          }
+        }
+        
+        return {
           id: uuidv4(),
-          sender: "bot",
-          text: res.data.result.reply,
+          sender: msg.type === 'user_message' ? 'user' : 'bot',
+          text: text,
           createdAt: new Date().toISOString(),
+          audioData: audioData
         };
-        dispatch(receiveMessage(botMsg));
-      } else {
-        // Handle case where API returns success: false
-        const errorMsg = res.data.error?.message || "Chatbot service returned an unexpected response.";
-        dispatch(setError(errorMsg));
-      }
+      });
+    
+    setMessages(chatMessages);
+    saveChatHistory(chatMessages);
+  }, [voiceMessages]);
 
-    } catch (err: unknown) {
-      const errorMessage = processApiError(err);
-      dispatch(setError(errorMessage));
-    } finally {
-      dispatch(setLoading(false));
+  // Handle voice errors
+  useEffect(() => {
+    if (voiceError) {
+      setError(voiceError.message || 'Voice connection error');
     }
-  }, [state.messages]);
+  }, [voiceError]);
 
-  /**
-   * Clears the current error state
-   */
-  const clearError = useCallback((): void => {
-    dispatch(setError());
+  const sendMessage = useCallback(async (text: string) => {
+    if (status.value === 'connected') {
+      sendUserInput(text);
+    }
+  }, [sendUserInput, status]);
+
+  const sendVoiceMessage = useCallback(async () => {
+    // Hume SDK handles audio automatically, this is for compatibility
+    console.log('Voice message sending is handled automatically by Hume SDK');
   }, []);
 
-  /**
-   * Clears all chat history
-   */
-  const clearHistory = useCallback((): void => {
-    dispatch({ type: 'CLEAR_HISTORY' });
+  const startListening = useCallback(async () => {
+    // Voice recording is handled automatically by Hume SDK
+    setIsListening(true);
+  }, []);
+
+  const stopListening = useCallback(async () => {
+    // Voice recording is handled automatically by Hume SDK
+    setIsListening(false);
+  }, []);
+
+  const toggleListening = useCallback(async () => {
+    if (isListening) {
+      await stopListening();
+    } else {
+      await startListening();
+    }
+  }, [isListening, startListening, stopListening]);
+
+  const muteAudio = useCallback(() => {
+    if (isMuted && unmute) {
+      unmute();
+    } else if (!isMuted && mute) {
+      mute();
+    }
+  }, [isMuted, mute, unmute]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setMessages([]);
     clearAllChatHistory();
   }, []);
 
-  //#endregion Event Handlers
+  const connectWrapper = useCallback(async () => {
+    await connect({
+      auth: {
+        type: "accessToken",
+        value: accessToken,
+      }
+    });
+  }, [connect, accessToken]);
 
-  // Memoize actions to avoid unnecessary rerenders
-  const actions = useMemo(() => ({ 
-    sendUserMessage, 
-    clearError, 
-    clearHistory 
-  }), [sendUserMessage, clearError, clearHistory]);
+  const disconnectWrapper = useCallback(async () => {
+    await disconnect();
+  }, [disconnect]);
+
+  const actions = useMemo(() => ({
+    connect: connectWrapper,
+    disconnect: disconnectWrapper,
+    sendMessage,
+    sendVoiceMessage,
+    startListening,
+    stopListening,
+    toggleListening,
+    muteAudio,
+    clearError,
+    clearHistory,
+  }), [connectWrapper, disconnectWrapper, sendMessage, sendVoiceMessage, startListening, stopListening, toggleListening, muteAudio, clearError, clearHistory]);
+
+  const chatState = useMemo(() => ({
+    messages,
+    loading: status.value === 'connecting',
+    error: error || voiceError?.message,
+    readyState: status.value === 'connected' ? 'OPEN' as const : 
+                status.value === 'connecting' ? 'CONNECTING' as const : 'CLOSED' as const,
+    isListening,
+    isMuted: isMuted || false,
+    isPlaying: isPlaying || false,
+  }), [messages, status, error, voiceError, isListening, isMuted, isPlaying]);
 
   return (
-    <ChatStateContext.Provider value={state}>
+    <ChatStateContext.Provider value={chatState}>
       <ChatActionContext.Provider value={actions}>
         {children}
       </ChatActionContext.Provider>
     </ChatStateContext.Provider>
+  );
+};
+
+export const ChatProvider = ({ children, skipLoadingUI = false }: { children: React.ReactNode; skipLoadingUI?: boolean }) => {
+  const [accessToken, setAccessToken] = useState<string>('');
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const getAccessToken = async () => {
+      try {
+        const response = await axiosInstance.post('/api/services/app/EmpathicVoiceService/GenerateAccessToken');
+        const token = response.data;
+        
+        // If the backend returns an object with a result property (ABP pattern)
+        let finalToken = token;
+        if (typeof token === 'object' && token.result) {
+          finalToken = token.result;
+        }
+        
+        // If it's still an object, try to get the access_token property
+        if (typeof finalToken === 'object' && finalToken.access_token) {
+          finalToken = finalToken.access_token;
+        }
+        
+        setAccessToken(finalToken);
+      } catch (err) {
+        console.error('Failed to get access token:', err);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    getAccessToken();
+  }, []);
+
+  if (!accessToken) {
+    if (skipLoadingUI) {
+      // Return null to let parent component handle loading UI
+      return null;
+    }
+    return <ModernLoadingState type="general" message="Initializing MindMate..." />;
+  }
+
+  return (
+    <ChatProviderContext.Provider value={{ isInitializing }}>
+      <VoiceProvider 
+        onMessage={(message) => {
+          // Handle real-time messages if needed
+        }}
+      >
+        <InnerChatProvider accessToken={accessToken}>{children}</InnerChatProvider>
+      </VoiceProvider>
+    </ChatProviderContext.Provider>
   );
 };
 
@@ -341,7 +342,8 @@ export const useChatState = () => {
     throw new Error("useChatState must be used within a ChatProvider");
   }
   return context;
-};
+// Remove extra closing brace
+}
 
 export const useChatActions = () => {
   const context = useContext(ChatActionContext);
@@ -349,4 +351,9 @@ export const useChatActions = () => {
     throw new Error("useChatActions must be used within a ChatProvider");
   }
   return context;
-};
+}
+
+export const useChatProvider = () => {
+  const context = useContext(ChatProviderContext);
+  return context;
+}

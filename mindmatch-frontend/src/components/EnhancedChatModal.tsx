@@ -125,7 +125,7 @@ const IconComponents = {
 // #region Enhanced Chat Modal Component
 export default function EnhancedChatModal({ onClose }: EnhancedChatModalProps) {
   const { messages, loading, error } = useChatState();
-  const { sendUserMessage } = useChatActions() as { sendUserMessage: (text: string) => Promise<void> };
+  const { sendMessage } = useChatActions();
   const [input, setInput] = useState<string>('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -144,7 +144,7 @@ export default function EnhancedChatModal({ onClose }: EnhancedChatModalProps) {
     e.preventDefault();
     if (!input.trim() || !user?.token || loading) return;
     
-    await sendUserMessage(input);
+    await sendMessage(input);
     setInput('');
   };
 

@@ -31,26 +31,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
-      <SeekerProvider>
-        <AssessmentProvider>
-          <JournalProvider>
-            <MoodProvider>
-              <ChatProvider>
-                <html lang="en">
-                  <head>
-                    <meta charSet="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                  </head>
-                  <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <AuthProvider>
+          <SeekerProvider>
+            <AssessmentProvider>
+              <JournalProvider>
+                <MoodProvider>
+                  <ChatProvider>
                     {children}
-                  </body>
-                </html>
-              </ChatProvider>
-            </MoodProvider>
-          </JournalProvider>
-        </AssessmentProvider>
-      </SeekerProvider>
-    </AuthProvider>
+                  </ChatProvider>
+                </MoodProvider>
+              </JournalProvider>
+            </AssessmentProvider>
+          </SeekerProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

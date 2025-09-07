@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Abp.Dependency;
 using Abp.Application.Services;
+using Abp.Authorization;
 using System.Collections.Generic;
 
 namespace MINDMATE.Application.EmpathicVoice
@@ -14,6 +15,7 @@ namespace MINDMATE.Application.EmpathicVoice
 
 using MINDMATE.Application.EmpathicVoice.Dto;
 
+    [AbpAuthorize]
     public class EmpathicVoiceService : IApplicationService
     {
         private readonly string _apiKey;
@@ -31,9 +33,8 @@ using MINDMATE.Application.EmpathicVoice.Dto;
             var humeConfig = configuration.GetSection("HumeAI");
             _apiKey = humeConfig["ApiKey"];
             _secretKey = humeConfig["SecretKey"];
-            // Use the required Hume AI endpoints
-            _webSocketUrl = "wss://api.hume.ai/v0/evi/chat";
-            _authUrl = "https://api.hume.ai/oauth2-cc/token";
+            _webSocketUrl = humeConfig["WebSocketUrl"] ?? "wss://api.hume.ai/v0/evi/chat";
+            _authUrl = humeConfig["AuthUrl"] ?? "https://api.hume.ai/oauth2-cc/token";
             _configUrl = humeConfig["ConfigUrl"];
             _httpClient = new HttpClient();
         }
@@ -60,22 +61,18 @@ using MINDMATE.Application.EmpathicVoice.Dto;
                 var authValue = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_apiKey}:{_secretKey}"));
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authValue);
                 
-                Console.WriteLine($"Requesting access token from: {_authUrl}");
                 var response = await _httpClient.PostAsync(_authUrl, content);
                 
                 var responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Token response: {response.StatusCode}");
                 
                 response.EnsureSuccessStatusCode();
                 dynamic result = JsonConvert.DeserializeObject(responseBody);
                 string accessToken = result.access_token;
                 
-                Console.WriteLine($"Access token generated successfully: {accessToken.Substring(0, 20)}...");
                 return accessToken;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating access token: {ex.Message}");
                 throw;
             }
         }

@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, AlertCircle } from 'lucide-react';
-import { useChatState, useChatActions } from '@/providers/chat';
+import { MessageCircle, X, Send, Bot, User, AlertCircle, Mic, Volume2, VolumeX, Waves, Phone, PhoneOff } from 'lucide-react';
+import { useChatState, useChatActions } from "@/providers/chat";
 import styles from './ChatWidget.module.css';
 
 interface ChatWidgetProps {
@@ -10,9 +11,8 @@ interface ChatWidgetProps {
 }
 
 const ChatWidget = ({ className }: ChatWidgetProps) => {
-  const { messages, loading, error } = useChatState();
-  const { sendUserMessage, clearError } = useChatActions();
-  
+  const { messages, readyState, loading, error, isListening, isMuted } = useChatState();
+  const { connect, disconnect, sendMessage, toggleListening, muteAudio } = useChatActions();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -26,14 +26,9 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || loading) return;
-
-    try {
-      await sendUserMessage(inputValue);
-      setInputValue('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
+    if (!inputValue.trim() || loading || readyState !== "OPEN") return;
+    await sendMessage(inputValue);
+    setInputValue('');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -45,10 +40,25 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
-    if (error) {
-      clearError();
+  };
+
+  const handleToggleMute = () => {
+    muteAudio();
+  };
+
+  const handleToggleListening = () => {
+    toggleListening();
+  };
+
+  const getConnectionStatus = () => {
+    switch (readyState) {
+      case 'OPEN': return { text: 'Connected', color: '#10b981', icon: Phone };
+      case 'CONNECTING': return { text: 'Connecting...', color: '#f59e0b', icon: Phone };
+      default: return { text: 'Disconnected', color: '#ef4444', icon: PhoneOff };
     }
   };
+
+  const connectionStatus = getConnectionStatus();
 
   return (
     <div className={`${styles.chatContainer} ${className || ''}`}>
@@ -72,19 +82,33 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
           {/* Header */}
           <div className={styles.chatHeader}>
             <div className={styles.headerLeft}>
-              <Bot size={20} />
-              <div>
-                <h3>MindMate Assistant</h3>
-                <p>Here to support your wellness</p>
+              <div className={styles.headerAvatar}>
+                <Bot size={16} />
+              </div>
+              <div className={styles.headerInfo}>
+                <h3 className={styles.headerTitle}>MindMate Assistant</h3>
+                <div className={styles.headerStatus}>
+                  <connectionStatus.icon size={12} />
+                  <span style={{ color: connectionStatus.color }}>{connectionStatus.text}</span>
+                </div>
               </div>
             </div>
-            <button 
-              className={styles.closeButton}
-              onClick={toggleChat}
-              aria-label="Close chat"
-            >
-              <X size={18} />
-            </button>
+            <div className={styles.headerActions}>
+              <button 
+                className={`${styles.headerButton} ${isMuted ? styles.headerButtonActive : ''}`}
+                onClick={handleToggleMute}
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
+              <button 
+                className={styles.closeButton}
+                onClick={toggleChat}
+                aria-label="Close chat"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Messages Area */}
@@ -98,33 +122,35 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
             )}
 
             {/* Chat Messages */}
-            {messages.map((message) => (
+            {messages.map((msg, idx) => (
               <div 
-                key={message.id}
-                className={`${styles.message} ${
-                  message.sender === 'bot' ? styles.messageBot : styles.messageUser
-                }`}
+                key={msg.id || idx}
+                className={styles.message}
               >
-                <div className={`${styles.messageAvatar} ${
-                  message.sender === 'bot' ? styles.messageAvatarBot : styles.messageAvatarUser
-                }`}>
-                  {message.sender === 'bot' ? <Bot size={14} /> : <User size={14} />}
+                <div className={styles.messageAvatar}>
+                  {msg.sender === 'user' ? <User size={14} /> : <Bot size={14} />}
                 </div>
-                <div className={`${styles.messageBubble} ${
-                  message.sender === 'bot' ? styles.messageBubbleBot : styles.messageBubbleUser
-                }`}>
-                  {message.text}
+                <div className={styles.messageBubble}>
+                  {msg.text}
+                  {msg.audioData && (
+                    <div className={styles.audioPlayer}>
+                      <audio controls preload="metadata">
+                        <source src={msg.audioData} type="audio/wav" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
 
             {/* Loading Indicator */}
             {loading && (
-              <div className={`${styles.message} ${styles.messageBot}`}>
-                <div className={`${styles.messageAvatar} ${styles.messageAvatarBot}`}>
+              <div className={styles.message}>
+                <div className={styles.messageAvatar}>
                   <Bot size={14} />
                 </div>
-                <div className={`${styles.messageBubble} ${styles.messageBubbleBot} ${styles.loadingBubble}`}>
+                <div className={styles.messageBubble}>
                   <div className={styles.typingIndicator}>
                     <span></span>
                     <span></span>
@@ -140,9 +166,6 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
               <div className={styles.errorMessage}>
                 <AlertCircle size={16} />
                 <span>{error}</span>
-                <button onClick={clearError} className={styles.errorDismiss}>
-                  <X size={14} />
-                </button>
               </div>
             )}
 
@@ -151,24 +174,61 @@ const ChatWidget = ({ className }: ChatWidgetProps) => {
 
           {/* Input Area */}
           <div className={styles.inputContainer}>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Share what's on your mind..."
-              className={styles.messageInput}
-              disabled={loading}
-              maxLength={500}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || loading}
-              className={styles.sendButton}
-              aria-label="Send message"
-            >
-              <Send size={16} />
-            </button>
+            <div className={styles.inputWrapper}>
+              {isListening && (
+                <div className={styles.voiceIndicator}>
+                  <div className={styles.voiceWaves}>
+                    <div className={styles.voiceWave}></div>
+                    <div className={styles.voiceWave}></div>
+                    <div className={styles.voiceWave}></div>
+                  </div>
+                </div>
+              )}
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={isListening ? "Listening..." : "Type your message..."}
+                className={styles.messageInput}
+                disabled={loading || readyState !== "OPEN" || isListening}
+                maxLength={500}
+              />
+              <div className={styles.inputActions}>
+                <button
+                  type="button"
+                  className={`${styles.micButton} ${isListening ? styles.micButtonActive : ''}`}
+                  onClick={handleToggleListening}
+                  disabled={readyState !== 'OPEN'}
+                  title={isListening ? "Stop Listening" : "Start Voice Input"}
+                >
+                  {isListening ? <Waves size={14} /> : <Mic size={14} />}
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || loading || readyState !== "OPEN" || isListening}
+                  className={styles.sendButton}
+                  aria-label="Send message"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Session Controls */}
+            <div className={styles.sessionControls}>
+              {readyState === "OPEN" ? (
+                <button onClick={disconnect} className={styles.disconnectButton}>
+                  <PhoneOff size={12} />
+                  End Session
+                </button>
+              ) : (
+                <button onClick={() => connect()} className={styles.connectButton}>
+                  <Phone size={12} />
+                  Start Session
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
