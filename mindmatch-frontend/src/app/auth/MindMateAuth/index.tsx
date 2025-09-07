@@ -1,5 +1,5 @@
 import React from 'react';
-import LandingPage from '@/components/LandingPage';
+import MindMateLanding from '@/components/MindMateLanding';
 import { styles } from '@/components/styles';
 import WithAuth from '@/hoc/WithAuth';
 
@@ -7,7 +7,7 @@ import WithAuth from '@/hoc/WithAuth';
 const MindMateAuth: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-      <LandingPage />
+      <MindMateLanding />
       {/* Global Styles */}
       <style>{`
         * { box-sizing: border-box; }

@@ -1,42 +1,185 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --accent-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --wellness-gradient: linear-gradient(135deg, #96fbc4 0%, #f9f047 100%);
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.65);
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #000000;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  line-height: 1.6;
+  position: relative;
+}
+
+/* Animated Background */
+.bgAnimation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #000000 70%);
+}
+
+.bgAnimation::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+      radial-gradient(circle at 15% 85%, rgba(102, 126, 234, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 85% 15%, rgba(240, 147, 251, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.2) 0%, transparent 60%),
+      radial-gradient(circle at 75% 75%, rgba(150, 251, 196, 0.15) 0%, transparent 40%);
+  animation: bgShift 15s ease-in-out infinite;
+}
+
+@keyframes bgShift {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.1) rotate(1deg);
   }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+/* Floating Emotional Particles */
+.emotionalParticles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.emotionParticle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(1px);
+  animation: floatEmotion 12s linear infinite;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+.emotionHappy { background: var(--wellness-gradient); }
+.emotionCalm { background: var(--secondary-gradient); }
+.emotionFocused { background: var(--primary-gradient); }
+
+@keyframes floatEmotion {
+  0% {
+    transform: translateY(100vh) translateX(0px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100px) translateX(50px) rotate(360deg);
+    opacity: 0;
+  }
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Section header styles (shared across components) */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 6rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.sectionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 1.8rem;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 50px;
+  backdrop-filter: blur(20px);
+  margin-bottom: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sectionTitle {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+}
+
+.sectionSubtitle {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .stepsTimeline {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .stepsTimeline::before {
+    display: none;
+  }
+  
+  .step {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .accordionContent.active {
+    max-height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navLinks { display: none; }
+  .useCasesGrid, 
+  .industriesGrid,
+  .capabilitiesGrid,
+  .ideasGrid { 
+    grid-template-columns: 1fr; 
+  }
+  .heroButtons { flex-direction: column; }
+  .heroStats { 
+    gap: 2rem; 
+    justify-content: space-around;
+  }
+  .emotionNetwork { 
+    width: 300px; 
+    height: 250px; 
+    transform: scale(0.8);
   }
 }

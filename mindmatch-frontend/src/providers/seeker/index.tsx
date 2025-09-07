@@ -155,10 +155,12 @@ export const SeekerProvider = ({ children }: { children: React.ReactNode }) => {
     const endpoint = `/api/services/app/SeekerAnalytics/GetAIPatternAnalysis?days=${days}`;
     try {
       const response = await axiosInstance.get(endpoint);
-      const result = response.data?.result || {};
-      // Normalize: always provide only 'trend', never 'trends'
+  const result = response.data?.result || {};
+  // Normalize: always provide only 'trend', never 'trends'
   const trend = result.trend ?? result.trends ?? null;
-  const { trends, ...rest } = result;
+  // Remove unused variable 'trends'
+  const rest = { ...result };
+  delete rest.trends;
   return { ...rest, trend };
     } catch (error: unknown) {
       throw error;

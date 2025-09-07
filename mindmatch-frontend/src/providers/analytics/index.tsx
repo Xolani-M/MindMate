@@ -72,28 +72,30 @@ function analyticsReducer(
 export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) => {
 	const [state, dispatch] = useReducer(analyticsReducer, ANALYTICS_INITIAL_STATE);
 
-	// Ensure return type is void
-	const getAnalytics = () : void => {
-		(async () => {
-			dispatch({ type: AnalyticsActionEnums.getAnalyticsPending });
-			try {
-				// Example endpoint, replace with your real analytics API
-				const endpoint = `/api/analytics`;
-				const response = await axios.get(endpoint);
-				dispatch({ type: AnalyticsActionEnums.getAnalyticsSuccess, payload: response.data });
-			} catch (error) {
-				console.error(error);
-				dispatch({ type: AnalyticsActionEnums.getAnalyticsError });
-			}
-		})();
-	};
 
-	const refreshAnalytics = () : void => {
-		getAnalytics();
-	};
+	   // Memoize actions to avoid recreating object on every render
+	   const actions = useMemo(() => {
+		   const getAnalytics = () : void => {
+			   (async () => {
+				   dispatch({ type: AnalyticsActionEnums.getAnalyticsPending });
+				   try {
+					   // Example endpoint, replace with your real analytics API
+					   const endpoint = `/api/analytics`;
+					   const response = await axios.get(endpoint);
+					   dispatch({ type: AnalyticsActionEnums.getAnalyticsSuccess, payload: response.data });
+				   } catch (error) {
+					   console.error(error);
+					   dispatch({ type: AnalyticsActionEnums.getAnalyticsError });
+				   }
+			   })();
+		   };
 
-	// Memoize actions to avoid recreating object on every render
-		const actions = useMemo(() => ({ getAnalytics, refreshAnalytics }), [refreshAnalytics]);
+		   const refreshAnalytics = () : void => {
+			   getAnalytics();
+		   };
+
+		   return { getAnalytics, refreshAnalytics };
+	   }, []);
 
 	return (
 		<AnalyticsStateContext.Provider value={state}>

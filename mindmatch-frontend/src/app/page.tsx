@@ -1,7 +1,6 @@
-"use client";
-import React from "react";
-import LandingPage from "@/components/LandingPage";
+ "use client";
+ import MindMateLanding from "@/components/MindMateLanding";
 
-export default function Page() {
-  return <LandingPage />;
-}
+ export default function Home() {
+   return <MindMateLanding />;
+ }
