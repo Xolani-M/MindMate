@@ -41,4 +41,7 @@ WORKDIR /app
 # Copy published output
 COPY --from=publish /app/publish .
 
+# Copy .env file
+COPY [".env", "."]
+
 ENTRYPOINT ["dotnet", "MINDMATE.Web.Host.dll"]

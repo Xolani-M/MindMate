@@ -1,6 +1,5 @@
 **/.classpath
 **/.dockerignore
-**/.env
 **/.git
 **/.gitignore
 **/.project
@@ -23,4 +22,3 @@
 **/values.dev.yaml
 LICENSE
 README.md
-src/MINDMATE.Web.Host/appsettings.json
